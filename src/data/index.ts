@@ -1,0 +1,82 @@
+import { dpLessons } from "./dp";
+import { graphLessons } from "./graph";
+import { otherLessons } from "./other";
+import { sortingLessons } from "./sorting";
+import { CATEGORIES, type Algorithm, type CategoryId } from "./types";
+
+export { CATEGORIES };
+export type { Algorithm, CategoryId };
+
+export const algorithms: Algorithm[] = [
+  ...sortingLessons,
+  ...graphLessons,
+  ...dpLessons,
+  ...otherLessons,
+];
+
+export const algorithmMap = new Map(algorithms.map((a) => [a.slug, a]));
+
+export function getAlgorithm(slug: string) {
+  return algorithmMap.get(slug);
+}
+
+export function algorithmsByCategory(id: CategoryId) {
+  return algorithms.filter((a) => a.category === id);
+}
+
+export const sortingCheat = [
+  {
+    name: "氣泡排序",
+    best: "Θ(n)",
+    avg: "Θ(n²)",
+    worst: "Θ(n²)",
+    space: "Θ(1)",
+    stable: true,
+    inPlace: true,
+  },
+  {
+    name: "插入排序",
+    best: "Θ(n)",
+    avg: "Θ(n²)",
+    worst: "Θ(n²)",
+    space: "Θ(1)",
+    stable: true,
+    inPlace: true,
+  },
+  {
+    name: "選擇排序",
+    best: "Θ(n²)",
+    avg: "Θ(n²)",
+    worst: "Θ(n²)",
+    space: "Θ(1)",
+    stable: false,
+    inPlace: true,
+  },
+  {
+    name: "合併排序",
+    best: "Θ(n log n)",
+    avg: "Θ(n log n)",
+    worst: "Θ(n log n)",
+    space: "Θ(n)",
+    stable: true,
+    inPlace: false,
+  },
+  {
+    name: "快速排序",
+    best: "Θ(n log n)",
+    avg: "Θ(n log n)",
+    worst: "Θ(n²)",
+    space: "Θ(log n)",
+    stable: false,
+    inPlace: true,
+  },
+  {
+    name: "堆積排序",
+    best: "Θ(n log n)",
+    avg: "Θ(n log n)",
+    worst: "Θ(n log n)",
+    space: "Θ(1)",
+    stable: false,
+    inPlace: true,
+  },
+];
