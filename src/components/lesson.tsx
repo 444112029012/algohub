@@ -217,9 +217,9 @@ export function Lesson({ algorithm }: { algorithm: Algorithm }) {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl bg-card px-3 py-2 ring-1 ring-border">
+    <div className="min-w-0 rounded-xl bg-card px-3 py-2 ring-1 ring-border">
       <p className="text-[11px] text-muted-foreground">{label}</p>
-      <p className="font-mono text-sm">{value}</p>
+      <p className="font-mono text-xs leading-snug break-words sm:text-sm">{value}</p>
     </div>
   );
 }

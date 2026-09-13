@@ -277,9 +277,9 @@ DFS-VISIT(u)
       "把 decrease-key 忘了，重複把同一點丟進 heap 時要跳過過期狀態。",
     ],
     complexity: {
-      timeBest: "O(V²) 或 O((V+E) log V)",
-      timeAvg: "同左（依實作）",
-      timeWorst: "同左",
+      timeBest: "O(V²) 或 O(E log V)",
+      timeAvg: "依實作相同",
+      timeWorst: "依實作相同",
       space: "Θ(V)",
     },
     complexityNote:
