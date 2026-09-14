@@ -17,6 +17,7 @@ const graphRows = [
   ["Kruskal", "O(E log E)", "MST、稀疏圖", "並查集成環判斷"],
   ["Prim", "O(V²) 或 O(E log V)", "MST、稠密圖", "從點長樹"],
   ["Kahn 拓樸", "Θ(V+E)", "DAG 排程", "排不出來就有環"],
+  ["最大流 EK", "O(V E²)", "增廣路、最小割", "記得反向邊"],
 ];
 
 const dpRows = [
@@ -27,6 +28,9 @@ const dpRows = [
   ["Huffman", "O(n log n)", "合併頻率最小的兩棵樹", "前綴碼、平均碼長"],
   ["LCS", "Θ(mn)", "子序列可跳字", "別當成 substring"],
   ["LIS（耐心排序）", "O(n log n)", "最長遞增子序列", "DP 樸素是 O(n²)"],
+  ["編輯距離", "Θ(mn)", "插刪替", "相同走左上 +0"],
+  ["矩陣鏈乘", "Θ(n³)", "區間 DP 括號化", "Catalan 是方案數"],
+  ["活動選擇", "O(n log n)", "結束最早", "貪婪即最優"],
 ];
 
 export default function CheatsheetPage() {
@@ -119,6 +123,43 @@ export default function CheatsheetPage() {
             </thead>
             <tbody>
               {dpRows.map((r) => (
+                <tr key={r[0]} className="border-t border-border">
+                  {r.map((c) => (
+                    <td key={c} className="px-4 py-2">
+                      {c}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
+
+      <Card className="paper-card overflow-hidden">
+        <CardHeader>
+          <CardTitle>NP-complete 與近似</CardTitle>
+        </CardHeader>
+        <CardContent className="overflow-x-auto px-0 pb-0">
+          <table className="w-full min-w-[720px] text-left text-sm">
+            <thead className="bg-muted/60 text-xs text-muted-foreground">
+              <tr>
+                {["問題", "關係", "考試抓手", "近似"].map((h) => (
+                  <th key={h} className="px-4 py-2 font-medium">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["3-SAT", "化約起點（2-SAT 在 P）", "A ≤p B 表示 B 較硬", "—"],
+                ["團／獨立集", "補圖互化", "獨立集大小 k ⇔ 點覆蓋 n-k", "團沒有好的常數近似"],
+                ["點覆蓋", "V\\C 是獨立集", "匹配兩端", "2-approx"],
+                ["子集覆蓋／擊中集", "關聯矩陣對偶", "每次選新覆蓋最多", "H(n)≈ln n"],
+                ["哈密頓／TSP", "歐拉在 P、哈密頓 NPC", "度量才有 MST 加倍", "度量 2-approx"],
+                ["子集和／分割", "弱 NPC", "Θ(nT) 偽多項式", "有 FPTAS"],
+              ].map((r) => (
                 <tr key={r[0]} className="border-t border-border">
                   {r.map((c) => (
                     <td key={c} className="px-4 py-2">

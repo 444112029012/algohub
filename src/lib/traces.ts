@@ -28,6 +28,7 @@ export type GraphFrame = {
   structureLabel: string;
   structure: string[];
   dist?: Record<string, number | string>;
+  edgeLabels?: Record<string, string>;
 };
 
 export type TableFrame = {
@@ -988,6 +989,14 @@ export function getGraphTrace(slug: string): GraphFrame[] {
       return kruskalTrace();
     case "topo-sort":
       return topoTrace();
+    case "prim":
+      return primTrace();
+    case "bellman-ford":
+      return bellmanFordTrace();
+    case "vertex-cover":
+      return vertexCoverTrace();
+    case "max-flow":
+      return maxFlowTrace();
     default:
       return [];
   }
@@ -1001,6 +1010,18 @@ export function getTableTrace(slug: string): TableFrame[] {
       return lcsTrace();
     case "floyd-warshall":
       return floydTrace();
+    case "lis":
+      return lisTrace();
+    case "subset-sum":
+      return subsetSumTrace();
+    case "edit-distance":
+      return editDistanceTrace();
+    case "matrix-chain":
+      return matrixChainTrace();
+    case "unbounded-knapsack":
+      return unboundedKnapsackTrace();
+    case "fractional-knapsack":
+      return fractionalKnapsackTrace();
     default:
       return [];
   }
@@ -1122,15 +1143,733 @@ export function getSetCoverTrace(slug: string): SetCoverFrame[] {
   return slug === "set-cover" ? setCoverTrace() : [];
 }
 
-export function graphLayout(slug: string) {
-  if (slug === "topo-sort") return TOPO_GRAPH;
+export type LayoutEdge = {
+  u: string;
+  v: string;
+  w?: number;
+  directed: boolean;
+};
+
+export const BF_GRAPH = {
+  nodes: [
+    { id: "S", x: 50, y: 118 },
+    { id: "A", x: 180, y: 48 },
+    { id: "B", x: 180, y: 188 },
+    { id: "C", x: 320, y: 118 },
+  ],
+  edges: [
+    ["S", "A", 4],
+    ["S", "B", 5],
+    ["A", "B", -3],
+    ["A", "C", 6],
+    ["B", "C", 2],
+  ] as [string, string, number][],
+};
+
+export const FLOW_GRAPH = {
+  nodes: [
+    { id: "s", x: 50, y: 118 },
+    { id: "A", x: 180, y: 48 },
+    { id: "B", x: 180, y: 188 },
+    { id: "t", x: 320, y: 118 },
+  ],
+  edges: [
+    ["s", "A", 3],
+    ["s", "B", 2],
+    ["A", "B", 1],
+    ["A", "t", 2],
+    ["B", "t", 4],
+  ] as [string, string, number][],
+};
+
+export function graphLayout(slug: string): {
+  nodes: { id: string; x: number; y: number }[];
+  edges: LayoutEdge[];
+} {
+  if (slug === "topo-sort") {
+    return {
+      nodes: TOPO_GRAPH.nodes,
+      edges: TOPO_GRAPH.edges.map(([u, v]) => ({ u, v, directed: true })),
+    };
+  }
+  if (slug === "bellman-ford") {
+    return {
+      nodes: BF_GRAPH.nodes,
+      edges: BF_GRAPH.edges.map(([u, v, w]) => ({ u, v, w, directed: true })),
+    };
+  }
+  if (slug === "max-flow") {
+    return {
+      nodes: FLOW_GRAPH.nodes,
+      edges: FLOW_GRAPH.edges.map(([u, v, w]) => ({ u, v, w, directed: true })),
+    };
+  }
   return {
     nodes: DEMO_GRAPH.nodes,
     edges: DEMO_GRAPH.undirected.map(([u, v, w]) => ({
       u,
       v,
       w,
-      directed: false as const,
+      directed: false,
     })),
   };
+}
+
+export function primTrace(start = "A"): GraphFrame[] {
+  const g = adjList();
+  const frames: GraphFrame[] = [];
+  const inT = new Set<string>([start]);
+  const nodeStates = idleGraph();
+  const edgeStates: Record<string, GraphEdgeState> = {};
+  nodeStates[start] = "visited";
+  const mst: string[] = [];
+  frames.push({
+    nodeStates: { ...nodeStates },
+    edgeStates: { ...edgeStates },
+    message: `Prim 從 ${start} 長樹：每次選「一端在樹內、一端在樹外」的最輕邊。`,
+    structureLabel: "MST",
+    structure: [],
+  });
+  while (inT.size < DEMO_GRAPH.nodes.length) {
+    let best: { u: string; v: string; w: number } | null = null;
+    for (const u of inT) {
+      for (const { to, w } of g[u]) {
+        if (inT.has(to)) continue;
+        const k = edgeKey(u, to);
+        edgeStates[k] = "active";
+        if (!best || w < best.w) best = { u, v: to, w };
+      }
+    }
+    if (!best) break;
+    frames.push({
+      nodeStates: { ...nodeStates },
+      edgeStates: { ...edgeStates },
+      message: `跨切最輕邊 ${best.u}-${best.v}（${best.w}）。`,
+      structureLabel: "MST",
+      structure: [...mst],
+    });
+    const k = edgeKey(best.u, best.v);
+    edgeStates[k] = "tree";
+    inT.add(best.v);
+    nodeStates[best.v] = "visited";
+    mst.push(`${best.u}-${best.v} (${best.w})`);
+    for (const e of Object.keys(edgeStates)) {
+      if (edgeStates[e] === "active") edgeStates[e] = "idle";
+    }
+    edgeStates[k] = "tree";
+    frames.push({
+      nodeStates: { ...nodeStates },
+      edgeStates: { ...edgeStates },
+      message: `把 ${best.v} 納入樹。`,
+      structureLabel: "MST",
+      structure: [...mst],
+    });
+  }
+  frames.push({
+    nodeStates: Object.fromEntries(
+      DEMO_GRAPH.nodes.map((n) => [n.id, "done" as const])
+    ),
+    edgeStates: { ...edgeStates },
+    message: `Prim 完成，與 Kruskal 同一棵 MST（總權重 ${mst
+      .map((s) => Number(s.match(/\((\d+)\)/)?.[1] ?? 0))
+      .reduce((a, b) => a + b, 0)}）。`,
+    structureLabel: "MST",
+    structure: [...mst],
+  });
+  return frames;
+}
+
+export function bellmanFordTrace(): GraphFrame[] {
+  const nodes = BF_GRAPH.nodes.map((n) => n.id);
+  const edges = BF_GRAPH.edges;
+  const dist: Record<string, number> = {};
+  const nodeStates: Record<string, GraphNodeState> = {};
+  for (const id of nodes) {
+    dist[id] = Infinity;
+    nodeStates[id] = "idle";
+  }
+  dist["S"] = 0;
+  nodeStates["S"] = "queued";
+  const frames: GraphFrame[] = [];
+  const fmt = () =>
+    Object.fromEntries(
+      Object.entries(dist).map(([k, v]) => [k, v === Infinity ? "∞" : v])
+    );
+  const edgeStates: Record<string, GraphEdgeState> = {};
+  frames.push({
+    nodeStates: { ...nodeStates },
+    edgeStates: { ...edgeStates },
+    message: "Bellman-Ford：對所有邊做 |V|-1 輪鬆弛。邊權可為負。",
+    structureLabel: "距離",
+    structure: Object.entries(fmt()).map(([k, v]) => `${k}:${v}`),
+    dist: fmt(),
+  });
+  for (let round = 1; round <= nodes.length - 1; round++) {
+    let changed = false;
+    for (const [u, v, w] of edges) {
+      const k = `${u}>${v}`;
+      edgeStates[k] = "active";
+      frames.push({
+        nodeStates: { ...nodeStates },
+        edgeStates: { ...edgeStates },
+        message: `第 ${round} 輪鬆弛 ${u}→${v}（${w}）：d[${v}] 現 ${
+          dist[v] === Infinity ? "∞" : dist[v]
+        }，候選 ${dist[u] === Infinity ? "∞" : dist[u] + w}`,
+        structureLabel: "距離",
+        structure: Object.entries(fmt()).map(([k, v]) => `${k}:${v}`),
+        dist: fmt(),
+      });
+      if (dist[u] + w < dist[v]) {
+        dist[v] = dist[u] + w;
+        changed = true;
+        edgeStates[k] = "relaxed";
+        nodeStates[v] = "queued";
+        frames.push({
+          nodeStates: { ...nodeStates },
+          edgeStates: { ...edgeStates },
+          message: `更新 d[${v}] = ${dist[v]}`,
+          structureLabel: "距離",
+          structure: Object.entries(fmt()).map(([k, v]) => `${k}:${v}`),
+          dist: fmt(),
+        });
+      } else {
+        edgeStates[k] = "rejected";
+      }
+    }
+    if (!changed) break;
+  }
+  frames.push({
+    nodeStates: Object.fromEntries(nodes.map((id) => [id, "done" as const])),
+    edgeStates: { ...edgeStates },
+    message: "再做一輪若還能更新，就有負環。本圖沒有。",
+    structureLabel: "距離",
+    structure: Object.entries(fmt()).map(([k, v]) => `${k}:${v}`),
+    dist: fmt(),
+  });
+  return frames;
+}
+
+export function vertexCoverTrace(): GraphFrame[] {
+  const frames: GraphFrame[] = [];
+  const cover = new Set<string>();
+  const remaining = DEMO_GRAPH.undirected.map(([u, v, w]) => [u, v, w] as const);
+  const nodeStates = idleGraph();
+  const edgeStates: Record<string, GraphEdgeState> = {};
+  const taken: string[] = [];
+  frames.push({
+    nodeStates: { ...nodeStates },
+    edgeStates: { ...edgeStates },
+    message: "2-approx：任取一條剩餘邊，兩端都放進覆蓋，刪掉與這兩點關聯的邊。選出的邊形成匹配。",
+    structureLabel: "覆蓋 / 匹配邊",
+    structure: [],
+  });
+  while (remaining.length) {
+    const [u, v] = remaining[0]!;
+    const k = edgeKey(u, v);
+    edgeStates[k] = "active";
+    frames.push({
+      nodeStates: { ...nodeStates },
+      edgeStates: { ...edgeStates },
+      message: `取匹配邊 ${u}-${v}，兩端都進覆蓋。`,
+      structureLabel: "覆蓋 / 匹配邊",
+      structure: [`C={${[...cover].join(",") || "∅"}}`, ...taken],
+    });
+    cover.add(u);
+    cover.add(v);
+    nodeStates[u] = "visited";
+    nodeStates[v] = "visited";
+    edgeStates[k] = "tree";
+    taken.push(`${u}-${v}`);
+    const next = remaining.filter(([a, b]) => a !== u && a !== v && b !== u && b !== v);
+    for (const [a, b] of remaining) {
+      if (a === u || a === v || b === u || b === v) {
+        const ek = edgeKey(a, b);
+        if (edgeStates[ek] !== "tree") edgeStates[ek] = "rejected";
+      }
+    }
+    remaining.length = 0;
+    remaining.push(...next);
+    frames.push({
+      nodeStates: { ...nodeStates },
+      edgeStates: { ...edgeStates },
+      message: `覆蓋 C={${[...cover].join(", ")}}。虛線邊已被這兩點蓋掉。`,
+      structureLabel: "覆蓋 / 匹配邊",
+      structure: [`C={${[...cover].join(",")}}`, ...taken],
+    });
+  }
+  frames.push({
+    nodeStates: { ...nodeStates },
+    edgeStates: { ...edgeStates },
+    message: `|C|=${cover.size} ≤ 2·OPT，因為 OPT 至少要為每條匹配邊付一個點。`,
+    structureLabel: "覆蓋 / 匹配邊",
+    structure: [`C={${[...cover].join(",")}}`, ...taken],
+  });
+  return frames;
+}
+
+export function maxFlowTrace(): GraphFrame[] {
+  type E = { u: string; v: string; cap: number; flow: number };
+  const edges: E[] = FLOW_GRAPH.edges.map(([u, v, cap]) => ({
+    u,
+    v,
+    cap,
+    flow: 0,
+  }));
+  const nodes = FLOW_GRAPH.nodes.map((n) => n.id);
+  const frames: GraphFrame[] = [];
+  const labels = () =>
+    Object.fromEntries(
+      edges.map((e) => [`${e.u}>${e.v}`, `${e.flow}/${e.cap}`])
+    );
+  const snap = (
+    message: string,
+    nodeStates: Record<string, GraphNodeState>,
+    edgeStates: Record<string, GraphEdgeState>,
+    extra: string[] = []
+  ): GraphFrame => ({
+    nodeStates,
+    edgeStates,
+    message,
+    structureLabel: "流 / 路徑",
+    structure: [
+      `值=${edges.reduce((s, e) => (e.u === "s" ? s + e.flow : s), 0)}`,
+      ...extra,
+    ],
+    edgeLabels: labels(),
+  });
+
+  const idleN = Object.fromEntries(nodes.map((id) => [id, "idle" as const]));
+  frames.push(
+    snap("Edmonds–Karp：殘餘網路做 BFS 找增廣路，瓶頸為路徑上殘餘容量最小者。", {
+      ...idleN,
+    }, {})
+  );
+
+  const residual = (u: string, v: string) => {
+    const fwd = edges.find((e) => e.u === u && e.v === v);
+    if (fwd) return fwd.cap - fwd.flow;
+    const back = edges.find((e) => e.u === v && e.v === u);
+    if (back) return back.flow;
+    return 0;
+  };
+  const neighbors = (u: string) => {
+    const out: string[] = [];
+    for (const n of nodes) if (n !== u && residual(u, n) > 0) out.push(n);
+    return out;
+  };
+
+  let guard = 0;
+  while (guard++ < 8) {
+    const prev: Record<string, string | null> = Object.fromEntries(
+      nodes.map((id) => [id, null])
+    );
+    const seen = new Set(["s"]);
+    const q = ["s"];
+    const nodeStates: Record<string, GraphNodeState> = { ...idleN, s: "queued" };
+    const edgeStates: Record<string, GraphEdgeState> = {};
+    let found = false;
+    while (q.length) {
+      const u = q.shift()!;
+      nodeStates[u] = "current";
+      if (u === "t") {
+        found = true;
+        break;
+      }
+      for (const v of neighbors(u)) {
+        if (seen.has(v)) continue;
+        seen.add(v);
+        prev[v] = u;
+        q.push(v);
+        nodeStates[v] = "queued";
+        edgeStates[`${u}>${v}`] = "active";
+      }
+      if (u !== "s") nodeStates[u] = "visited";
+    }
+    if (!found) {
+      frames.push(
+        snap("找不到增廣路，最大流確定。最小割是殘餘網路中從 s 走得到的點。", {
+          ...idleN,
+          s: "done",
+          t: "done",
+        }, edgeStates)
+      );
+      break;
+    }
+    const path: string[] = [];
+    let x: string | null = "t";
+    while (x) {
+      path.push(x);
+      x = prev[x];
+    }
+    path.reverse();
+    let bottle = Infinity;
+    for (let i = 0; i < path.length - 1; i++) {
+      bottle = Math.min(bottle, residual(path[i]!, path[i + 1]!));
+    }
+    frames.push(
+      snap(
+        `增廣路 ${path.join("→")}，瓶頸 ${bottle}。`,
+        { ...idleN, ...Object.fromEntries(path.map((id) => [id, "current" as const])) },
+        Object.fromEntries(
+          path.slice(0, -1).map((u, i) => [`${u}>${path[i + 1]}`, "tree" as const])
+        ),
+        [path.join("→")]
+      )
+    );
+    for (let i = 0; i < path.length - 1; i++) {
+      const u = path[i]!;
+      const v = path[i + 1]!;
+      const fwd = edges.find((e) => e.u === u && e.v === v);
+      if (fwd) fwd.flow += bottle;
+      else {
+        const back = edges.find((e) => e.u === v && e.v === u);
+        if (back) back.flow -= bottle;
+      }
+    }
+    frames.push(
+      snap(`沿路加上 ${bottle}。目前最大流下界已更新。`, { ...idleN }, {}, [
+        path.join("→"),
+      ])
+    );
+  }
+  return frames;
+}
+
+export function lisTrace(): TableFrame[] {
+  const a = [3, 1, 4, 2, 5];
+  const n = a.length;
+  const dp = Array(n).fill(1);
+  const frames: TableFrame[] = [];
+  const cols = a.map((v, i) => `${i}:${v}`);
+  frames.push({
+    rowLabels: ["a", "dp"],
+    colLabels: cols,
+    cells: [a, [...dp]],
+    highlight: [],
+    message: "LIS：dp[i] = 以 a[i] 結尾的最長遞增子序列長度。",
+  });
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < i; j++) {
+      frames.push({
+        rowLabels: ["a", "dp"],
+        colLabels: cols,
+        cells: [a, [...dp]],
+        highlight: [
+          { r: 0, c: i },
+          { r: 0, c: j },
+          { r: 1, c: i },
+          { r: 1, c: j },
+        ],
+        message:
+          a[j] < a[i]
+            ? `a[${j}]=${a[j]} < a[${i}]=${a[i]}，dp[i] ← max(${dp[i]}, ${dp[j]}+1)`
+            : `a[${j}]=${a[j]} ≮ ${a[i]}，略過`,
+      });
+      if (a[j] < a[i]) dp[i] = Math.max(dp[i], dp[j] + 1);
+    }
+  }
+  frames.push({
+    rowLabels: ["a", "dp"],
+    colLabels: cols,
+    cells: [a, [...dp]],
+    highlight: [{ r: 1, c: dp.indexOf(Math.max(...dp)) }],
+    message: `LIS 長度 = max(dp) = ${Math.max(...dp)}，例如 1,2,5 或 3,4,5。`,
+  });
+  return frames;
+}
+
+export function subsetSumTrace(): TableFrame[] {
+  const nums = [3, 4, 5];
+  const T = 7;
+  const n = nums.length;
+  const dp: boolean[][] = Array.from({ length: n + 1 }, () =>
+    Array(T + 1).fill(false)
+  );
+  for (let i = 0; i <= n; i++) dp[i][0] = true;
+  const frames: TableFrame[] = [];
+  const rowLabels = ["∅", ...nums.map((x) => String(x))];
+  const colLabels = Array.from({ length: T + 1 }, (_, s) => String(s));
+  const show = () => dp.map((r) => r.map((v) => (v ? "T" : "F")));
+  frames.push({
+    rowLabels,
+    colLabels,
+    cells: show(),
+    highlight: [],
+    message: "Subset Sum：dp[i][s] = 前 i 個數字能否湊出 s。目標 7。",
+  });
+  for (let i = 1; i <= n; i++) {
+    const x = nums[i - 1]!;
+    for (let s = 1; s <= T; s++) {
+      dp[i][s] = dp[i - 1][s] || (s >= x && dp[i - 1][s - x]);
+      frames.push({
+        rowLabels,
+        colLabels,
+        cells: show(),
+        highlight: [
+          { r: i, c: s },
+          { r: i - 1, c: s },
+          ...(s >= x ? [{ r: i - 1, c: s - x }] : []),
+        ],
+        message: `數字 ${x}、和 ${s}：不拿 ${dp[i - 1][s] ? "T" : "F"}${
+          s >= x ? ` 或拿 ${dp[i - 1][s - x] ? "T" : "F"}` : "（太大不能拿）"
+        } → ${dp[i][s] ? "T" : "F"}`,
+      });
+    }
+  }
+  frames.push({
+    rowLabels,
+    colLabels,
+    cells: show(),
+    highlight: [{ r: n, c: T }],
+    message: `dp[n][7] = ${dp[n][T] ? "T，例如 3+4" : "F"}。這是偽多項式。`,
+  });
+  return frames;
+}
+
+export function editDistanceTrace(): TableFrame[] {
+  const X = "CAT";
+  const Y = "CUT";
+  const m = X.length;
+  const n = Y.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  const frames: TableFrame[] = [];
+  const rowLabels = ["ε", ...X.split("")];
+  const colLabels = ["ε", ...Y.split("")];
+  frames.push({
+    rowLabels,
+    colLabels,
+    cells: dp.map((r) => [...r]),
+    highlight: [],
+    message: `編輯距離("${X}","${Y}")。刪=下、插=右、替換=斜。`,
+  });
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = X[i - 1] === Y[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + cost
+      );
+      frames.push({
+        rowLabels,
+        colLabels,
+        cells: dp.map((r) => [...r]),
+        highlight: [
+          { r: i, c: j },
+          { r: i - 1, c: j },
+          { r: i, c: j - 1 },
+          { r: i - 1, c: j - 1 },
+        ],
+        message:
+          cost === 0
+            ? `${X[i - 1]}=${Y[j - 1]}，沿用左上 ${dp[i - 1][j - 1]}`
+            : `替換/刪/插 → min(${dp[i - 1][j - 1]}+1, ${dp[i - 1][j]}+1, ${dp[i][j - 1]}+1) = ${dp[i][j]}`,
+      });
+    }
+  }
+  frames.push({
+    rowLabels,
+    colLabels,
+    cells: dp.map((r) => [...r]),
+    highlight: [{ r: m, c: n }],
+    message: `距離 ${dp[m][n]}（把 A 換成 U）。`,
+  });
+  return frames;
+}
+
+export function matrixChainTrace(): TableFrame[] {
+  const p = [10, 20, 30, 40];
+  const n = p.length - 1;
+  const m: number[][] = Array.from({ length: n }, () => Array(n).fill(0));
+  const frames: TableFrame[] = [];
+  const labels = ["A1 10×20", "A2 20×30", "A3 30×40"];
+  const show = () => m.map((r) => r.map((v) => (v === 0 ? 0 : v)));
+  frames.push({
+    rowLabels: labels,
+    colLabels: labels,
+    cells: show(),
+    highlight: [],
+    message: "矩陣鏈：m[i][j] = 乘 Aᵢ…Aⱼ 的最少純量乘法。對角為 0。",
+  });
+  for (let len = 2; len <= n; len++) {
+    for (let i = 0; i <= n - len; i++) {
+      const j = i + len - 1;
+      m[i][j] = Infinity;
+      for (let k = i; k < j; k++) {
+        const cost = m[i][k] + m[k + 1][j] + p[i]! * p[k + 1]! * p[j + 1]!;
+        frames.push({
+          rowLabels: labels,
+          colLabels: labels,
+          cells: show().map((r, ri) =>
+            r.map((v, ci) => (ri === i && ci === j && !Number.isFinite(m[i][j]) ? "…" : v))
+          ),
+          highlight: [
+            { r: i, c: j },
+            { r: i, c: k },
+            { r: k + 1, c: j },
+          ],
+          message: `切在 A${k + 1} 後：${m[i][k]}+${m[k + 1][j]}+${p[i]}×${p[k + 1]}×${p[j + 1]}=${cost}`,
+        });
+        if (cost < m[i][j]) m[i][j] = cost;
+      }
+    }
+  }
+  frames.push({
+    rowLabels: labels,
+    colLabels: labels,
+    cells: show(),
+    highlight: [{ r: 0, c: n - 1 }],
+    message: `最少 ${m[0][n - 1]} 次乘法。(A1 A2)A3 = 10·20·30 + 10·30·40 = 18000；A1(A2 A3)=32000。`,
+  });
+  return frames;
+}
+
+export function unboundedKnapsackTrace(): TableFrame[] {
+  const coins = [1, 5, 11];
+  const W = 15;
+  const dp = Array(W + 1).fill(Infinity);
+  dp[0] = 0;
+  const frames: TableFrame[] = [];
+  const colLabels = Array.from({ length: W + 1 }, (_, i) => String(i));
+  const show = () => [dp.map((v) => (v === Infinity ? "∞" : v))];
+  frames.push({
+    rowLabels: ["最少枚數"],
+    colLabels,
+    cells: show(),
+    highlight: [{ r: 0, c: 0 }],
+    message: "零錢／無限背包：每種硬幣可用多次。dp[x] = 湊 x 的最少枚數。",
+  });
+  for (const c of coins) {
+    for (let x = c; x <= W; x++) {
+      if (dp[x - c] + 1 < dp[x]) dp[x] = dp[x - c] + 1;
+      frames.push({
+        rowLabels: ["最少枚數"],
+        colLabels,
+        cells: show(),
+        highlight: [
+          { r: 0, c: x },
+          { r: 0, c: x - c },
+        ],
+        message: `硬幣 ${c}：dp[${x}] ← min(原, dp[${x - c}]+1) = ${
+          dp[x] === Infinity ? "∞" : dp[x]
+        }`,
+      });
+    }
+  }
+  frames.push({
+    rowLabels: ["最少枚數"],
+    colLabels,
+    cells: show(),
+    highlight: [{ r: 0, c: W }],
+    message: `15 元最少 ${dp[W]} 枚（11+1×4，或 5×3）。貪婪先拿 11 也剛好不是最差。`,
+  });
+  return frames;
+}
+
+export function fractionalKnapsackTrace(): TableFrame[] {
+  const items = [
+    { name: "A", w: 10, v: 60 },
+    { name: "B", w: 20, v: 100 },
+    { name: "C", w: 30, v: 120 },
+  ];
+  const W = 50;
+  const sorted = [...items].sort((a, b) => b.v / b.w - a.v / a.w);
+  const frames: TableFrame[] = [];
+  const rowLabels = sorted.map((it) => `${it.name} 密度${(it.v / it.w).toFixed(1)}`);
+  const colLabels = ["重量", "價值", "帶走"];
+  const taken = sorted.map(() => 0);
+  frames.push({
+    rowLabels,
+    colLabels,
+    cells: sorted.map((it, i) => [it.w, it.v, taken[i]!]),
+    highlight: [],
+    message: "分數背包：依價值密度排序，能整件就整件，最後一件可切。容量 50。",
+  });
+  let cap = W;
+  let value = 0;
+  for (let i = 0; i < sorted.length; i++) {
+    const it = sorted[i]!;
+    const take = Math.min(it.w, cap);
+    taken[i] = take;
+    value += (take / it.w) * it.v;
+    cap -= take;
+    frames.push({
+      rowLabels,
+      colLabels,
+      cells: sorted.map((x, j) => [x.w, x.v, taken[j]!]),
+      highlight: [{ r: i, c: 2 }],
+      message: `拿 ${it.name} ${take}/${it.w}，累計價值 ${value}，剩餘容量 ${cap}。`,
+    });
+    if (cap === 0) break;
+  }
+  frames.push({
+    rowLabels,
+    colLabels,
+    cells: sorted.map((x, j) => [x.w, x.v, taken[j]!]),
+    highlight: [],
+    message: `最優 ${value}。0/1 不能切，這題若改 0/1 答案會不同。`,
+  });
+  return frames;
+}
+
+export type IntervalState = "idle" | "cand" | "picked" | "rejected";
+export type IntervalFrame = {
+  intervals: {
+    name: string;
+    start: number;
+    end: number;
+    state: IntervalState;
+  }[];
+  cursor?: number;
+  message: string;
+  picked: string[];
+};
+
+const ACT = [
+  { name: "A", start: 1, end: 4 },
+  { name: "B", start: 3, end: 5 },
+  { name: "C", start: 0, end: 6 },
+  { name: "D", start: 5, end: 7 },
+  { name: "E", start: 5, end: 9 },
+  { name: "F", start: 8, end: 11 },
+  { name: "G", start: 8, end: 12 },
+  { name: "H", start: 12, end: 16 },
+];
+
+export function activityTrace(): IntervalFrame[] {
+  const sorted = [...ACT].sort((a, b) => a.end - b.end);
+  const frames: IntervalFrame[] = [];
+  const state: Record<string, IntervalState> = Object.fromEntries(
+    ACT.map((x) => [x.name, "idle"])
+  );
+  const snap = (message: string, cursor?: number): IntervalFrame => ({
+    intervals: ACT.map((x) => ({ ...x, state: state[x.name]! })),
+    cursor,
+    message,
+    picked: sorted.filter((x) => state[x.name] === "picked").map((x) => x.name),
+  });
+  frames.push(snap("依結束時間排序後，每次選「結束最早且與已選不衝突」的工作。"));
+  let lastEnd = -Infinity;
+  for (const it of sorted) {
+    state[it.name] = "cand";
+    frames.push(
+      snap(`考慮 ${it.name} [${it.start},${it.end}]。上一件結束於 ${lastEnd === -Infinity ? "−∞" : lastEnd}。`, it.end)
+    );
+    if (it.start >= lastEnd) {
+      state[it.name] = "picked";
+      lastEnd = it.end;
+      frames.push(snap(`不衝突 → 選 ${it.name}。`, it.end));
+    } else {
+      state[it.name] = "rejected";
+      frames.push(snap(`${it.name} 與已選重疊，捨棄。`, lastEnd));
+    }
+  }
+  frames.push(snap("最優排程：選中的工作數最多（結束最早是正確的貪婪選擇）。"));
+  return frames;
+}
+
+export function getIntervalTrace(slug: string): IntervalFrame[] {
+  return slug === "activity-selection" ? activityTrace() : [];
 }

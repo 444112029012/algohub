@@ -1,5 +1,9 @@
+import { dpExtraLessons } from "./dp-extra";
 import { dpLessons } from "./dp";
+import { graphExtraLessons } from "./graph-extra";
 import { graphLessons } from "./graph";
+import { greedyExtraLessons } from "./greedy-extra";
+import { npLessons } from "./np";
 import { otherLessons } from "./other";
 import { sortingLessons } from "./sorting";
 import { CATEGORIES, type Algorithm, type CategoryId } from "./types";
@@ -10,7 +14,11 @@ export type { Algorithm, CategoryId };
 export const algorithms: Algorithm[] = [
   ...sortingLessons,
   ...graphLessons,
+  ...graphExtraLessons,
   ...dpLessons,
+  ...dpExtraLessons,
+  ...greedyExtraLessons,
+  ...npLessons,
   ...otherLessons,
 ];
 

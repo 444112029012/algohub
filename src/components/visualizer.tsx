@@ -3,18 +3,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  DEMO_GRAPH,
-  TOPO_GRAPH,
   edgeKey,
   getArrayTrace,
   getGraphTrace,
+  getIntervalTrace,
   getSetCoverTrace,
   getTableTrace,
+  graphLayout,
   type ArrayKind,
   type CoverElemState,
   type CoverSetState,
   type GraphEdgeState,
   type GraphNodeState,
+  type IntervalState,
 } from "@/lib/traces";
 import { cn } from "@/lib/utils";
 
@@ -116,10 +117,12 @@ export function AlgorithmVisualizer({ slug }: { slug: string }) {
   const graph = useMemo(() => getGraphTrace(slug), [slug]);
   const table = useMemo(() => getTableTrace(slug), [slug]);
   const sets = useMemo(() => getSetCoverTrace(slug), [slug]);
+  const intervals = useMemo(() => getIntervalTrace(slug), [slug]);
   if (array.length) return <ArrayVis frames={array} />;
   if (graph.length) return <GraphVis slug={slug} frames={graph} />;
   if (table.length) return <TableVis frames={table} />;
   if (sets.length) return <SetCoverVis frames={sets} />;
+  if (intervals.length) return <IntervalVis frames={intervals} />;
   return null;
 }
 
@@ -196,10 +199,7 @@ function GraphVis({
 }) {
   const p = usePlayer(frames.length);
   const f = frames[p.i]!;
-  const directed = slug === "topo-sort";
-  const nodes = directed ? TOPO_GRAPH.nodes : DEMO_GRAPH.nodes;
-  const undirected = DEMO_GRAPH.undirected;
-  const directedEdges = TOPO_GRAPH.edges;
+  const layout = graphLayout(slug);
 
   return (
     <div className="space-y-4">
@@ -217,52 +217,35 @@ function GraphVis({
             <path d="M 0 0 L 10 5 L 0 10 z" fill="#6b6256" />
           </marker>
         </defs>
-        {directed
-          ? directedEdges.map(([u, v]) => {
-              const a = nodes.find((n) => n.id === u)!;
-              const b = nodes.find((n) => n.id === v)!;
-              const st = f.edgeStates[`${u}>${v}`] ?? "idle";
-              return (
-                <line
-                  key={`${u}>${v}`}
-                  x1={a.x}
-                  y1={a.y}
-                  x2={b.x}
-                  y2={b.y}
-                  stroke={EDGE_STROKE[st]}
-                  strokeWidth={st === "idle" ? 1.5 : 3}
-                  markerEnd="url(#arrow)"
-                />
-              );
-            })
-          : undirected.map(([u, v, w]) => {
-              const a = nodes.find((n) => n.id === u)!;
-              const b = nodes.find((n) => n.id === v)!;
-              const st = f.edgeStates[edgeKey(u, v)] ?? "idle";
-              const mx = (a.x + b.x) / 2;
-              const my = (a.y + b.y) / 2;
-              return (
-                <g key={edgeKey(u, v)}>
-                  <line
-                    x1={a.x}
-                    y1={a.y}
-                    x2={b.x}
-                    y2={b.y}
-                    stroke={EDGE_STROKE[st]}
-                    strokeWidth={st === "tree" || st === "relaxed" ? 3.5 : 1.6}
-                    strokeDasharray={st === "rejected" ? "4 4" : undefined}
-                  />
-                  <text
-                    x={mx + 6}
-                    y={my - 6}
-                    className="fill-foreground text-[11px]"
-                  >
-                    {w}
-                  </text>
-                </g>
-              );
-            })}
-        {nodes.map((n) => {
+        {layout.edges.map((e) => {
+          const a = layout.nodes.find((n) => n.id === e.u)!;
+          const b = layout.nodes.find((n) => n.id === e.v)!;
+          const key = e.directed ? `${e.u}>${e.v}` : edgeKey(e.u, e.v);
+          const st = f.edgeStates[key] ?? "idle";
+          const mx = (a.x + b.x) / 2;
+          const my = (a.y + b.y) / 2;
+          const label = f.edgeLabels?.[key] ?? (e.w !== undefined ? String(e.w) : "");
+          return (
+            <g key={key}>
+              <line
+                x1={a.x}
+                y1={a.y}
+                x2={b.x}
+                y2={b.y}
+                stroke={EDGE_STROKE[st]}
+                strokeWidth={st === "tree" || st === "relaxed" ? 3.5 : st === "idle" ? 1.6 : 3}
+                strokeDasharray={st === "rejected" ? "4 4" : undefined}
+                markerEnd={e.directed ? "url(#arrow)" : undefined}
+              />
+              {label && (
+                <text x={mx + 6} y={my - 6} className="fill-foreground text-[11px]">
+                  {label}
+                </text>
+              )}
+            </g>
+          );
+        })}
+        {layout.nodes.map((n) => {
           const st = f.nodeStates[n.id] ?? "idle";
           return (
             <g key={n.id}>
@@ -297,7 +280,7 @@ function GraphVis({
         <Legend color={NODE_FILL.queued} label="佇列 / 候選" />
         <Legend color={NODE_FILL.current} label="當前" />
         <Legend color={NODE_FILL.visited} label="已處理" />
-        <Legend color={EDGE_STROKE.tree} label="樹邊 / MST" />
+        <Legend color={EDGE_STROKE.tree} label="樹邊 / 匹配 / 增廣" />
         <Legend color={EDGE_STROKE.rejected} label="捨棄" dashed />
       </div>
       <StepBar
@@ -454,6 +437,58 @@ function SetCoverVis({ frames }: { frames: ReturnType<typeof getSetCoverTrace> }
         <span className="ml-2 inline-flex items-center gap-1">
           <span className="inline-block size-2 rounded-full bg-teal" /> 已覆蓋
         </span>
+      </p>
+      <p className="min-h-12 rounded-lg bg-muted/70 px-3 py-2 text-sm">{f.message}</p>
+      <StepBar
+        i={p.i}
+        n={frames.length}
+        playing={p.playing}
+        onPrev={p.prev}
+        onNext={p.next}
+        onToggle={() => p.setPlaying(!p.playing)}
+        onReset={p.reset}
+      />
+    </div>
+  );
+}
+
+const INT_CLASS: Record<IntervalState, string> = {
+  idle: "bg-primary/70",
+  cand: "bg-vermillion",
+  picked: "bg-teal",
+  rejected: "bg-muted-foreground/30",
+};
+
+function IntervalVis({ frames }: { frames: ReturnType<typeof getIntervalTrace> }) {
+  const p = usePlayer(frames.length);
+  const f = frames[p.i]!;
+  const maxT = Math.max(...f.intervals.map((x) => x.end), 1);
+  return (
+    <div className="space-y-4">
+      <div className="space-y-1.5">
+        {f.intervals.map((it) => (
+          <div key={it.name} className="flex items-center gap-2">
+            <span className="w-6 shrink-0 text-xs font-medium">{it.name}</span>
+            <div className="relative h-6 flex-1 rounded bg-muted/50">
+              <div
+                className={cn(
+                  "absolute top-0.5 h-5 rounded-sm transition-all",
+                  INT_CLASS[it.state]
+                )}
+                style={{
+                  left: `${(it.start / maxT) * 100}%`,
+                  width: `${((it.end - it.start) / maxT) * 100}%`,
+                }}
+              />
+            </div>
+            <span className="w-16 shrink-0 font-mono text-[11px] text-muted-foreground">
+              [{it.start},{it.end}]
+            </span>
+          </div>
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground">
+        已選：{f.picked.length ? f.picked.join("、") : "尚無"}
       </p>
       <p className="min-h-12 rounded-lg bg-muted/70 px-3 py-2 text-sm">{f.message}</p>
       <StepBar

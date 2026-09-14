@@ -592,7 +592,7 @@ print(greedy_set_cover(U, F))  # ['S1', 'S2', 'S3']`,
         explanation: "S1 先被選（新蓋 4），再補 S2、S3；OPT 直接 S2∪S3。",
       },
     ],
-    related: ["huffman", "knapsack", "kruskal"],
+    related: ["huffman", "vertex-cover", "activity-selection"],
   },
   {
     slug: "master-theorem",

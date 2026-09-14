@@ -384,7 +384,7 @@ def dijkstra(graph: dict[str, list[tuple[str, int]]], start: str):
         explanation: "最多 O(E) 次 decrease/push，每次 O(log V)。",
       },
     ],
-    related: ["bfs", "floyd-warshall", "kruskal"],
+    related: ["bfs", "floyd-warshall", "bellman-ford"],
   },
   {
     slug: "floyd-warshall",
@@ -622,7 +622,7 @@ int kruskal(int n, vector<array<int,3>> e) {
         explanation: "樹的邊數 = 點數 - 1。",
       },
     ],
-    related: ["union-find", "dijkstra", "huffman"],
+    related: ["union-find", "dijkstra", "prim"],
   },
   {
     slug: "topo-sort",

@@ -1,14 +1,15 @@
 # 演算法研究室｜研究所常考演算法
 
-針對資訊研究所入學考試整理的互動教材：每支演算法包含介紹、複雜度、手算步驟、虛擬碼、Python / C++ / TypeScript，以及（在排序、圖論、DP 上）可逐步播放的示意。
+針對資訊研究所入學考試整理的互動教材：每支演算法包含介紹、複雜度、手算步驟、虛擬碼、Python / C++ / TypeScript，並在適合的篇目提供逐步示意。
 
 ## 涵蓋範圍
 
 - 排序：Merge / Quick / Heap，外加氣泡、插入、選擇的對照表
 - 搜尋：二分搜尋與邊界
-- 圖論：BFS、DFS、Dijkstra、Floyd–Warshall、Kruskal、拓樸排序
-- 動態規劃：0/1 背包、LCS
-- 貪婪：Huffman、子集覆蓋（Set Cover）與 H(n) 近似比
+- 圖論：BFS、DFS、Dijkstra、Bellman-Ford、Floyd–Warshall、Kruskal、Prim、拓樸排序、最大流
+- 動態規劃：0/1 背包、無限背包／零錢、LCS、LIS、編輯距離、矩陣鏈乘、子集和
+- 貪婪：Huffman、活動選擇、分數背包、子集覆蓋
+- NP 與近似：3-SAT、團與獨立集、點覆蓋、擊中集、哈密頓／TSP
 - 其他：並查集、KMP、主定理
 
 ## 本機執行

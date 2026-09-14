@@ -14,7 +14,7 @@ export default function HomePage() {
           <p className="mt-4 max-w-xl text-[15px] leading-7 text-foreground/80">
             依資訊研究所入學考試整理的 {algorithms.length}{" "}
             篇教材。每篇都有直覺介紹、複雜度、手算步驟、虛擬碼，以及 Python / C++ /
-            TypeScript。排序、圖遍歷、最短路、背包與 LCS 還能逐步播放。
+            TypeScript。排序、圖遍歷、最短路、背包、流網路、區間與 DP 表都能逐步播放。
           </p>
         </div>
         <div className="grid grid-cols-3 gap-2 text-center">

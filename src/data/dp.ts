@@ -116,7 +116,7 @@ export const dpLessons: Algorithm[] = [
         explanation: "輸入 W 的位數是 log W，W 本身是指數級。",
       },
     ],
-    related: ["lcs", "huffman", "master-theorem"],
+    related: ["lcs", "fractional-knapsack", "unbounded-knapsack"],
   },
   {
     slug: "lcs",
@@ -233,6 +233,6 @@ export const dpLessons: Algorithm[] = [
         explanation: "表格 mn 格。",
       },
     ],
-    related: ["knapsack", "kmp", "floyd-warshall"],
+    related: ["knapsack", "lis", "edit-distance"],
   },
 ];

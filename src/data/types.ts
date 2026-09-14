@@ -6,11 +6,12 @@ export type CategoryId =
   | "greedy"
   | "ds"
   | "string"
-  | "complexity";
+  | "complexity"
+  | "np";
 
 export type ExamWeight = "極高" | "高" | "中";
 
-export type VisualizerKind = "array" | "graph" | "table" | "sets" | "none";
+export type VisualizerKind = "array" | "graph" | "table" | "sets" | "intervals" | "none";
 
 export type CodeLang = "python" | "cpp" | "typescript";
 
@@ -99,6 +100,12 @@ export const CATEGORIES: {
     name: "貪婪",
     english: "Greedy",
     blurb: "最優子結構 + 貪婪選擇性質要能證明或舉反例。",
+  },
+  {
+    id: "np",
+    name: "NP 與近似",
+    english: "NP & Approximation",
+    blurb: "化約方向、2-approx 與 H(n) 是選擇題主力。",
   },
   {
     id: "ds",
