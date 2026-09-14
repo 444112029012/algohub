@@ -10,7 +10,7 @@ export type CategoryId =
 
 export type ExamWeight = "極高" | "高" | "中";
 
-export type VisualizerKind = "array" | "graph" | "table" | "none";
+export type VisualizerKind = "array" | "graph" | "table" | "sets" | "none";
 
 export type CodeLang = "python" | "cpp" | "typescript";
 

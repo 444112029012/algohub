@@ -8,7 +8,8 @@
 - 搜尋：二分搜尋與邊界
 - 圖論：BFS、DFS、Dijkstra、Floyd–Warshall、Kruskal、拓樸排序
 - 動態規劃：0/1 背包、LCS
-- 其他：並查集、KMP、Huffman、主定理
+- 貪婪：Huffman、子集覆蓋（Set Cover）與 H(n) 近似比
+- 其他：並查集、KMP、主定理
 
 ## 本機執行
 

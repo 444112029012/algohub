@@ -8,8 +8,11 @@ import {
   edgeKey,
   getArrayTrace,
   getGraphTrace,
+  getSetCoverTrace,
   getTableTrace,
   type ArrayKind,
+  type CoverElemState,
+  type CoverSetState,
   type GraphEdgeState,
   type GraphNodeState,
 } from "@/lib/traces";
@@ -112,9 +115,11 @@ export function AlgorithmVisualizer({ slug }: { slug: string }) {
   const array = useMemo(() => getArrayTrace(slug), [slug]);
   const graph = useMemo(() => getGraphTrace(slug), [slug]);
   const table = useMemo(() => getTableTrace(slug), [slug]);
+  const sets = useMemo(() => getSetCoverTrace(slug), [slug]);
   if (array.length) return <ArrayVis frames={array} />;
   if (graph.length) return <GraphVis slug={slug} frames={graph} />;
   if (table.length) return <TableVis frames={table} />;
+  if (sets.length) return <SetCoverVis frames={sets} />;
   return null;
 }
 
@@ -374,6 +379,82 @@ function TableVis({ frames }: { frames: ReturnType<typeof getTableTrace> }) {
           </tbody>
         </table>
       </div>
+      <p className="min-h-12 rounded-lg bg-muted/70 px-3 py-2 text-sm">{f.message}</p>
+      <StepBar
+        i={p.i}
+        n={frames.length}
+        playing={p.playing}
+        onPrev={p.prev}
+        onNext={p.next}
+        onToggle={() => p.setPlaying(!p.playing)}
+        onReset={p.reset}
+      />
+    </div>
+  );
+}
+
+const ELEM_CLASS: Record<CoverElemState, string> = {
+  uncovered: "bg-muted text-muted-foreground",
+  new: "bg-gold text-foreground ring-2 ring-vermillion/50",
+  covered: "bg-teal text-white",
+};
+
+const SET_RING: Record<CoverSetState, string> = {
+  idle: "ring-border",
+  best: "ring-2 ring-vermillion bg-vermillion/5",
+  picked: "ring-2 ring-teal bg-teal/10",
+  stale: "opacity-45 ring-border",
+};
+
+function SetCoverVis({ frames }: { frames: ReturnType<typeof getSetCoverTrace> }) {
+  const p = usePlayer(frames.length);
+  const f = frames[p.i]!;
+  return (
+    <div className="space-y-4">
+      <div>
+        <p className="mb-2 text-xs text-muted-foreground">宇宙 U</p>
+        <div className="flex flex-wrap gap-2">
+          {f.universe.map((el) => (
+            <span
+              key={el.id}
+              className={cn(
+                "inline-flex size-9 items-center justify-center rounded-full text-sm font-semibold transition-colors",
+                ELEM_CLASS[el.state]
+              )}
+            >
+              {el.id}
+            </span>
+          ))}
+        </div>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-3">
+        {f.sets.map((s) => (
+          <div
+            key={s.name}
+            className={cn("rounded-xl bg-card px-3 py-2.5 ring-1 transition-all", SET_RING[s.state])}
+          >
+            <div className="flex items-baseline justify-between gap-2">
+              <p className="font-medium">{s.name}</p>
+              <p className="font-mono text-xs text-muted-foreground">新蓋 {s.remaining}</p>
+            </div>
+            <p className="mt-1 font-mono text-sm">
+              {"{"}
+              {s.elements.join(", ")}
+              {"}"}
+            </p>
+          </div>
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground">
+        已選：{f.picked.length ? f.picked.join("、") : "尚無"}
+        <span className="mx-2">·</span>
+        <span className="inline-flex items-center gap-1">
+          <span className="inline-block size-2 rounded-full bg-gold" /> 本步新蓋
+        </span>
+        <span className="ml-2 inline-flex items-center gap-1">
+          <span className="inline-block size-2 rounded-full bg-teal" /> 已覆蓋
+        </span>
+      </p>
       <p className="min-h-12 rounded-lg bg-muted/70 px-3 py-2 text-sm">{f.message}</p>
       <StepBar
         i={p.i}

@@ -412,7 +412,187 @@ function huffmanCodes(freq: Record<string, number>) {
         explanation: "每次減少一棵樹，直到剩根。",
       },
     ],
-    related: ["kruskal", "knapsack", "heap-sort"],
+    related: ["kruskal", "knapsack", "set-cover"],
+  },
+  {
+    slug: "set-cover",
+    name: "子集覆蓋",
+    english: "Set Cover",
+    category: "greedy",
+    examWeight: "高",
+    tags: ["貪婪", "近似演算法", "NP-hard", "集合覆蓋"],
+    summary:
+      "用最少個子集蓋住整個宇宙 U。精確版是 NP-hard；研究所常考的是「每次選覆蓋最多尚未覆蓋元素」的貪婪法，以及近似比 H(n)（調和數）。",
+    idea: "還沒蓋到的元素叫剩餘宇宙。每輪掃過所有還沒被選的集合，選「與剩餘宇宙交集最大」的那一個（平手依編號）。把新蓋到的元素從剩餘裡刪掉，直到蓋完。這個策略沒有最優子結構到能保證 OPT，但可以證明解的大小 ≤ H(s)·OPT，s 是最大集合的元素數，H(s)=1+1/2+…+1/s ≤ ln s + 1。",
+    whenToUse: [
+      "設施選址、感測器佈點、測驗題組覆蓋知識點",
+      "需要可行解、允許近似，而不是指數時間的精確 DP",
+      "點覆蓋、Hitting Set 等可化成集合覆蓋的問題",
+    ],
+    examTips: [
+      "判定版「能否用 k 個集合蓋完」是 NP-complete；優化版 NP-hard。",
+      "貪婪近似比 H(n)，n=|U| 或最大集合大小 s。H(n)≈ ln n + γ。",
+      "除非 P=NP，不存在比 (1-o(1)) ln n 更好的多項式近似（Feige）。",
+      "加權版改選「新覆蓋數 / 成本」最大的集合，近似比仍是 H(n)。",
+      "Vertex Cover：每條邊當元素、每個點當「關聯邊」的集合。圖上另有 2-approx（取最大匹配的兩端）。",
+      "證明直覺：把 OPT 的代價均攤到元素上，第 i 個被蓋的元素最多分到 OPT/i，加總就是 H。",
+    ],
+    pitfalls: [
+      "以為貪婪一定最優——下面例子貪婪 3、OPT 2。",
+      "平手時沒寫清楚規則，手算會和解答選到不同集合。",
+      "把「最大集合」理解成原始大小，而不是「還能新蓋幾個」。",
+      "和 0/1 背包、集合包裝（Set Packing，選的集合要互斥）搞反。",
+    ],
+    complexity: {
+      timeBest: "O(m n)",
+      timeAvg: "O(m² n) 樸素",
+      timeWorst: "O(m² n) 樸素",
+      space: "Θ(m n)",
+    },
+    complexityNote:
+      "m 個集合、宇宙 n 個元素。每輪掃描所有集合算新覆蓋，最多選 m 次。用堆積可再降，考試默認寫樸素即可。",
+    workedExample: {
+      title: "貪婪 ≠ OPT 的標準小例子",
+      input: "U={1,2,3,4,5,6}，S1={1,2,3,4}，S2={1,2,5}，S3={3,4,6}",
+      steps: [
+        {
+          title: "第 1 輪：比新覆蓋數",
+          detail:
+            "S1 新蓋 4 個，S2、S3 各 3 個。選 S1。剩餘 {5,6}。",
+        },
+        {
+          title: "第 2 輪",
+          detail: "S2 新蓋 {5}（1 個），S3 新蓋 {6}（1 個）。平手選編號較小的 S2。剩餘 {6}。",
+        },
+        {
+          title: "第 3 輪",
+          detail: "S3 新蓋 {6}，選 S3。剩餘空集合，結束。",
+        },
+        {
+          title: "對照 OPT",
+          detail:
+            "S2 ∪ S3 = {1,2,5,3,4,6} = U，兩個集合就夠。貪婪用了 3 個。比值 3/2 ≤ H(4)=1+1/2+1/3+1/4=2.083（S1 最大，s=4）。",
+        },
+      ],
+      result: "貪婪 {S1,S2,S3}，OPT={S2,S3}",
+    },
+    visualizer: "sets",
+    pseudocode: `GREEDY-SET-COVER(U, F)
+  C ← ∅                  // 已選的集合
+  R ← U                  // 尚未覆蓋的元素
+  while R ≠ ∅
+    選 S ∈ F\\C 使得 |S ∩ R| 最大
+    C ← C ∪ {S}
+    R ← R \\ S
+  return C
+
+加權版：選使 |S ∩ R| / cost(S) 最大的 S。
+近似保證：|C| ≤ H(s) · OPT，s = max |S|。`,
+    codes: {
+      python: `def greedy_set_cover(universe: set[str], family: dict[str, set[str]]) -> list[str]:
+    remaining = set(universe)
+    unused = dict(family)
+    picked: list[str] = []
+    while remaining and unused:
+        name = max(unused, key=lambda k: len(unused[k] & remaining))
+        if not (unused[name] & remaining):
+            break
+        picked.append(name)
+        remaining -= unused.pop(name)
+    return picked
+
+U = {"1", "2", "3", "4", "5", "6"}
+F = {
+    "S1": {"1", "2", "3", "4"},
+    "S2": {"1", "2", "5"},
+    "S3": {"3", "4", "6"},
+}
+print(greedy_set_cover(U, F))  # ['S1', 'S2', 'S3']`,
+      cpp: `vector<string> greedy_set_cover(
+    const set<int>& U,
+    const vector<pair<string, set<int>>>& F
+) {
+    set<int> rem = U;
+    vector<int> used(F.size(), 0);
+    vector<string> picked;
+    while (!rem.empty()) {
+        int best = -1, gain = 0;
+        for (int i = 0; i < (int)F.size(); ++i) if (!used[i]) {
+            int g = 0;
+            for (int x : F[i].second) if (rem.count(x)) ++g;
+            if (g > gain) { gain = g; best = i; }
+        }
+        if (best < 0 || gain == 0) break;
+        used[best] = 1;
+        picked.push_back(F[best].first);
+        for (int x : F[best].second) rem.erase(x);
+    }
+    return picked;
+}`,
+      typescript: `function greedySetCover(
+  universe: string[],
+  family: Record<string, string[]>
+) {
+  const remaining = new Set(universe);
+  const unused = { ...family };
+  const picked: string[] = [];
+  while (remaining.size) {
+    let best = "";
+    let gain = 0;
+    for (const [name, els] of Object.entries(unused)) {
+      const g = els.filter((x) => remaining.has(x)).length;
+      if (g > gain) {
+        gain = g;
+        best = name;
+      }
+    }
+    if (!best || gain === 0) break;
+    picked.push(best);
+    for (const x of unused[best]) remaining.delete(x);
+    delete unused[best];
+  }
+  return picked;
+}`,
+    },
+    quiz: [
+      {
+        id: "sc1",
+        prompt: "集合覆蓋問題（精確求最少集合數）屬於？",
+        options: [
+          "P，有線性時間演算法",
+          "NP-hard（判定版 NP-complete）",
+          "只能用動態規劃，沒有貪婪",
+          "和最小生成樹一樣有切性質保證最優",
+        ],
+        answer: 1,
+        explanation: "經典 NP-complete；貪婪只給近似解。",
+      },
+      {
+        id: "sc2",
+        prompt: "貪婪集合覆蓋（每次選新覆蓋最多）的近似比？",
+        options: [
+          "永遠 2",
+          "H(n)（調和數，約 ln n）",
+          "n（集合數）",
+          "沒有保證，可任意差",
+        ],
+        answer: 1,
+        explanation: "H(s)≤ln s+1，s 為最大集合大小；這幾乎已是多項式演算法能達到的最佳。",
+      },
+      {
+        id: "sc3",
+        prompt: "U={1..6}，S1={1,2,3,4}，S2={1,2,5}，S3={3,4,6}。貪婪與 OPT 各選幾個集合？",
+        options: [
+          "貪婪 2、OPT 2",
+          "貪婪 3、OPT 2",
+          "貪婪 2、OPT 3",
+          "貪婪 1、OPT 1",
+        ],
+        answer: 1,
+        explanation: "S1 先被選（新蓋 4），再補 S2、S3；OPT 直接 S2∪S3。",
+      },
+    ],
+    related: ["huffman", "knapsack", "kruskal"],
   },
   {
     slug: "master-theorem",

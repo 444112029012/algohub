@@ -1006,6 +1006,122 @@ export function getTableTrace(slug: string): TableFrame[] {
   }
 }
 
+export type CoverElemState = "uncovered" | "new" | "covered";
+export type CoverSetState = "idle" | "best" | "picked" | "stale";
+
+export type SetCoverFrame = {
+  universe: { id: string; state: CoverElemState }[];
+  sets: {
+    name: string;
+    elements: string[];
+    remaining: number;
+    state: CoverSetState;
+  }[];
+  picked: string[];
+  message: string;
+};
+
+const COVER_U = ["1", "2", "3", "4", "5", "6"];
+const COVER_F: { name: string; elements: string[] }[] = [
+  { name: "S1", elements: ["1", "2", "3", "4"] },
+  { name: "S2", elements: ["1", "2", "5"] },
+  { name: "S3", elements: ["3", "4", "6"] },
+];
+
+export function setCoverTrace(): SetCoverFrame[] {
+  const frames: SetCoverFrame[] = [];
+  const remaining = new Set(COVER_U);
+  const covered = new Set<string>();
+  const picked: string[] = [];
+  const unused = COVER_F.map((s) => ({ ...s }));
+
+  const snapshot = (
+    message: string,
+    newly: string[] = [],
+    best: string | null = null
+  ): SetCoverFrame => ({
+    universe: COVER_U.map((id) => ({
+      id,
+      state: newly.includes(id)
+        ? "new"
+        : covered.has(id)
+          ? "covered"
+          : "uncovered",
+    })),
+    sets: COVER_F.map((s) => {
+      const rem = s.elements.filter((x) => remaining.has(x)).length;
+      const isPicked = picked.includes(s.name);
+      return {
+        name: s.name,
+        elements: s.elements,
+        remaining: rem,
+        state: isPicked
+          ? "picked"
+          : best === s.name
+            ? "best"
+            : rem === 0
+              ? "stale"
+              : "idle",
+      };
+    }),
+    picked: [...picked],
+    message,
+  });
+
+  frames.push(
+    snapshot(
+      "宇宙 U={1..6}。貪婪每輪選「還能新蓋最多元素」的集合；平手取編號小的。"
+    )
+  );
+
+  while (remaining.size && unused.length) {
+    let bestIdx = 0;
+    let bestGain = -1;
+    const gains: string[] = [];
+    unused.forEach((s, i) => {
+      const g = s.elements.filter((x) => remaining.has(x)).length;
+      gains.push(`${s.name} 新蓋 ${g}`);
+      if (g > bestGain) {
+        bestGain = g;
+        bestIdx = i;
+      }
+    });
+    if (bestGain <= 0) break;
+    const choice = unused[bestIdx]!;
+    frames.push(
+      snapshot(
+        `剩餘 {${[...remaining].join(",")}}。${gains.join("；")} → 選 ${choice.name}。`,
+        [],
+        choice.name
+      )
+    );
+    const newly = choice.elements.filter((x) => remaining.has(x));
+    picked.push(choice.name);
+    for (const x of newly) {
+      remaining.delete(x);
+      covered.add(x);
+    }
+    unused.splice(bestIdx, 1);
+    frames.push(
+      snapshot(
+        `加入 ${choice.name}，新覆蓋 {${newly.join(",")}}。已選 {${picked.join(", ")}}。`,
+        newly
+      )
+    );
+  }
+
+  frames.push(
+    snapshot(
+      `貪婪用了 ${picked.length} 個集合：{${picked.join(", ")}}。OPT 是 {S2, S3} 只要 2 個。`
+    )
+  );
+  return frames;
+}
+
+export function getSetCoverTrace(slug: string): SetCoverFrame[] {
+  return slug === "set-cover" ? setCoverTrace() : [];
+}
+
 export function graphLayout(slug: string) {
   if (slug === "topo-sort") return TOPO_GRAPH;
   return {
