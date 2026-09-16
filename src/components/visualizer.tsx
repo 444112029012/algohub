@@ -81,7 +81,7 @@ function StepBar({
   );
 }
 
-function usePlayer(n: number) {
+function usePlayer(n: number, ms = 900) {
   const [i, setI] = useState(0);
   const [playing, setPlaying] = useState(false);
   useEffect(() => {
@@ -90,9 +90,9 @@ function usePlayer(n: number) {
       setPlaying(false);
       return;
     }
-    const t = window.setTimeout(() => setI((x) => Math.min(n - 1, x + 1)), 900);
+    const t = window.setTimeout(() => setI((x) => Math.min(n - 1, x + 1)), ms);
     return () => window.clearTimeout(t);
-  }, [playing, i, n]);
+  }, [playing, i, n, ms]);
   return {
     i,
     playing,
@@ -130,7 +130,7 @@ function ArrayVis({ frames }: { frames: ReturnType<typeof getArrayTrace> }) {
   const p = usePlayer(frames.length);
   const f = frames[p.i]!;
   const kinds = new Set(f.highlights.map((h) => h.kind));
-  const max = Math.max(...frames[0]!.array);
+  const max = Math.max(1, ...frames.flatMap((fr) => fr.array));
   return (
     <div className="space-y-4">
       <div className="flex h-44 items-end justify-center gap-1.5 sm:gap-2">
@@ -152,7 +152,9 @@ function ArrayVis({ frames }: { frames: ReturnType<typeof getArrayTrace> }) {
           );
         })}
       </div>
-      <p className="min-h-12 rounded-lg bg-muted/70 px-3 py-2 text-sm">{f.message}</p>
+      <p className="min-h-12 whitespace-pre-line rounded-lg bg-muted/70 px-3 py-2 text-sm leading-6">
+        {f.message}
+      </p>
       <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground">
         {[...kinds].map((k) => (
           <span key={k} className="inline-flex items-center gap-1">
@@ -189,6 +191,55 @@ const EDGE_STROKE: Record<GraphEdgeState, string> = {
   relaxed: "#3d6ea8",
   rejected: "#c9bfae",
 };
+
+function graphLegend(slug: string): { color: string; label: string; dashed?: boolean }[] {
+  if (slug === "scc") {
+    return [
+      { color: NODE_FILL.current, label: "正在走的點" },
+      { color: NODE_FILL.visited, label: "第一輪已離開（有完成時間）" },
+      { color: NODE_FILL.done, label: "已放進某個分量" },
+      { color: EDGE_STROKE.tree, label: "第一輪走的邊" },
+      { color: EDGE_STROKE.relaxed, label: "第二輪（反向圖）走的邊" },
+    ];
+  }
+  if (slug === "kruskal" || slug === "prim") {
+    return [
+      { color: NODE_FILL.current, label: "剛連上的點" },
+      { color: NODE_FILL.visited, label: "已在樹上" },
+      { color: EDGE_STROKE.tree, label: "加入 MST 的邊" },
+      { color: EDGE_STROKE.rejected, label: "會成環，丟掉", dashed: true },
+    ];
+  }
+  if (slug === "dijkstra" || slug === "bellman-ford") {
+    return [
+      { color: NODE_FILL.queued, label: "距離還可能改" },
+      { color: NODE_FILL.current, label: "這一步取出的點" },
+      { color: NODE_FILL.visited, label: "最短距離已確定" },
+      { color: EDGE_STROKE.relaxed, label: "這步在鬆弛的邊" },
+    ];
+  }
+  if (slug === "max-flow") {
+    return [
+      { color: NODE_FILL.current, label: "增廣路上的點" },
+      { color: EDGE_STROKE.tree, label: "這條增廣路" },
+      { color: EDGE_STROKE.rejected, label: "流量已滿", dashed: true },
+    ];
+  }
+  if (slug === "vertex-cover") {
+    return [
+      { color: NODE_FILL.current, label: "放進覆蓋的點" },
+      { color: EDGE_STROKE.tree, label: "這步取的匹配邊" },
+      { color: EDGE_STROKE.rejected, label: "已被蓋掉的邊", dashed: true },
+    ];
+  }
+  return [
+    { color: NODE_FILL.queued, label: "佇列裡、還沒走" },
+    { color: NODE_FILL.current, label: "正在處理" },
+    { color: NODE_FILL.visited, label: "已經走過" },
+    { color: EDGE_STROKE.tree, label: "這步採用的邊" },
+    { color: EDGE_STROKE.rejected, label: "略過", dashed: true },
+  ];
+}
 
 function GraphVis({
   slug,
@@ -270,18 +321,18 @@ function GraphVis({
           );
         })}
       </svg>
-      <p className="min-h-12 rounded-lg bg-muted/70 px-3 py-2 text-sm">{f.message}</p>
+      <p className="min-h-12 whitespace-pre-line rounded-lg bg-muted/70 px-3 py-2 text-sm leading-6">
+        {f.message}
+      </p>
       <div className="flex flex-wrap gap-2 font-mono text-xs text-muted-foreground">
         <span className="rounded bg-card px-2 py-1 ring-1 ring-border">
-          {f.structureLabel}：{f.structure.join(" · ") || "∅"}
+          {f.structureLabel}：{f.structure.join(" · ") || "（空）"}
         </span>
       </div>
       <div className="flex flex-wrap gap-3 text-[11px] text-muted-foreground">
-        <Legend color={NODE_FILL.queued} label="佇列 / 候選" />
-        <Legend color={NODE_FILL.current} label="當前" />
-        <Legend color={NODE_FILL.visited} label="已處理" />
-        <Legend color={EDGE_STROKE.tree} label="樹邊 / 匹配 / 增廣" />
-        <Legend color={EDGE_STROKE.rejected} label="捨棄" dashed />
+        {graphLegend(slug).map((item) => (
+          <Legend key={item.label} color={item.color} label={item.label} dashed={item.dashed} />
+        ))}
       </div>
       <StepBar
         i={p.i}
@@ -320,11 +371,24 @@ function Legend({
 }
 
 function TableVis({ frames }: { frames: ReturnType<typeof getTableTrace> }) {
-  const p = usePlayer(frames.length);
+  const p = usePlayer(frames.length, 1250);
   const f = frames[p.i]!;
-  const hi = new Set(f.highlight.map((h) => `${h.r},${h.c}`));
+  const roleOf = (ri: number, ci: number): "current" | "read" | null => {
+    const hit = f.highlight.find((h) => h.r === ri && h.c === ci);
+    if (!hit) return null;
+    if (hit.role) return hit.role;
+    const first = f.highlight[0];
+    return first && first.r === ri && first.c === ci ? "current" : "read";
+  };
   return (
     <div className="space-y-4">
+      {(f.rowTitle || f.colTitle) && (
+        <p className="text-xs leading-5 text-muted-foreground">
+          {f.colTitle ? <span>橫軸（欄）：{f.colTitle}</span> : null}
+          {f.rowTitle && f.colTitle ? <span className="mx-2">·</span> : null}
+          {f.rowTitle ? <span>縱軸（列）：{f.rowTitle}</span> : null}
+        </p>
+      )}
       <div className="overflow-x-auto">
         <table className="w-full min-w-[320px] border-collapse text-center text-sm">
           <thead>
@@ -343,26 +407,44 @@ function TableVis({ frames }: { frames: ReturnType<typeof getTableTrace> }) {
           <tbody>
             {f.cells.map((row, ri) => (
               <tr key={ri}>
-                <th className="border border-border bg-muted/40 px-2 py-1.5 font-medium">
+                <th className="border border-border bg-muted/40 px-2 py-1.5 text-left text-xs font-medium sm:text-sm">
                   {f.rowLabels[ri]}
                 </th>
-                {row.map((cell, ci) => (
-                  <td
-                    key={ci}
-                    className={cn(
-                      "border border-border px-2 py-1.5 font-mono transition-colors",
-                      hi.has(`${ri},${ci}`) && "bg-gold/50 ring-2 ring-vermillion/60"
-                    )}
-                  >
-                    {cell}
-                  </td>
-                ))}
+                {row.map((cell, ci) => {
+                  const role = roleOf(ri, ci);
+                  return (
+                    <td
+                      key={ci}
+                      className={cn(
+                        "border border-border px-2 py-1.5 font-mono transition-colors",
+                        role === "current" &&
+                          "bg-gold/55 font-semibold ring-2 ring-vermillion/70",
+                        role === "read" && "bg-sky-200/80 ring-1 ring-sky-500/50"
+                      )}
+                    >
+                      {cell}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <p className="min-h-12 rounded-lg bg-muted/70 px-3 py-2 text-sm">{f.message}</p>
+      <p className="flex flex-wrap gap-3 text-[11px] text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="inline-block size-2.5 rounded-sm bg-gold/80 ring-1 ring-vermillion/70" />
+          正在填的格子
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="inline-block size-2.5 rounded-sm bg-sky-200 ring-1 ring-sky-500/60" />
+          這一步去看的舊格子
+        </span>
+        {f.legend ? <span>{f.legend}</span> : null}
+      </p>
+      <p className="min-h-12 whitespace-pre-line rounded-lg bg-muted/70 px-3 py-2 text-sm leading-6">
+        {f.message}
+      </p>
       <StepBar
         i={p.i}
         n={frames.length}
@@ -438,7 +520,9 @@ function SetCoverVis({ frames }: { frames: ReturnType<typeof getSetCoverTrace> }
           <span className="inline-block size-2 rounded-full bg-teal" /> 已覆蓋
         </span>
       </p>
-      <p className="min-h-12 rounded-lg bg-muted/70 px-3 py-2 text-sm">{f.message}</p>
+      <p className="min-h-12 whitespace-pre-line rounded-lg bg-muted/70 px-3 py-2 text-sm leading-6">
+        {f.message}
+      </p>
       <StepBar
         i={p.i}
         n={frames.length}
@@ -490,7 +574,9 @@ function IntervalVis({ frames }: { frames: ReturnType<typeof getIntervalTrace> }
       <p className="text-xs text-muted-foreground">
         已選：{f.picked.length ? f.picked.join("、") : "尚無"}
       </p>
-      <p className="min-h-12 rounded-lg bg-muted/70 px-3 py-2 text-sm">{f.message}</p>
+      <p className="min-h-12 whitespace-pre-line rounded-lg bg-muted/70 px-3 py-2 text-sm leading-6">
+        {f.message}
+      </p>
       <StepBar
         i={p.i}
         n={frames.length}

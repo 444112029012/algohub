@@ -81,7 +81,7 @@ export const CATEGORIES: {
     id: "search",
     name: "搜尋",
     english: "Search",
-    blurb: "有序序列上的對數時間，以及邊界條件。",
+    blurb: "有序序列、答案上二分，以及 lo/hi 邊界。",
   },
   {
     id: "graph",
@@ -111,7 +111,7 @@ export const CATEGORIES: {
     id: "ds",
     name: "資料結構",
     english: "Data Structures",
-    blurb: "Heap、並查集常作為其他演算法的零件。",
+    blurb: "Heap 與並查集常作為其他演算法的零件。",
   },
   {
     id: "string",

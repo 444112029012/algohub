@@ -1,3 +1,16 @@
+import {
+  SCC_GRAPH,
+  binarySearchAnswerTrace,
+  bubbleSortTrace,
+  countingSortTrace,
+  heapDsTrace,
+  insertionSortTrace,
+  quickselectTrace,
+  radixSortTrace,
+  sccTrace,
+  selectionSortTrace,
+} from "./traces-extra";
+
 export type ArrayKind =
   | "compare"
   | "pivot"
@@ -31,12 +44,23 @@ export type GraphFrame = {
   edgeLabels?: Record<string, string>;
 };
 
+export type TableHighlight = {
+  r: number;
+  c: number;
+  /** 正在寫入的格；其餘預設當「這一步去抄的舊格」。 */
+  role?: "current" | "read";
+};
+
 export type TableFrame = {
   rowLabels: string[];
   colLabels: string[];
   cells: (number | string)[][];
-  highlight: { r: number; c: number }[];
+  highlight: TableHighlight[];
   message: string;
+  /** 列／欄在問什麼，給填表動畫當軸說明。 */
+  rowTitle?: string;
+  colTitle?: string;
+  legend?: string;
 };
 
 export const DEMO_ARRAY = [38, 27, 43, 3, 9, 82, 10];
@@ -799,35 +823,45 @@ export function knapsackTrace(): TableFrame[] {
   const frames: TableFrame[] = [];
   const rowLabels = ["∅", ...items.map((it) => `${it.name}(${it.w},${it.v})`)];
   const colLabels = Array.from({ length: W + 1 }, (_, i) => String(i));
+  const tableHint = {
+    rowTitle: "輪到哪一件（往下 = 多考慮一件）",
+    colTitle: "背包容量 0～5",
+    legend: "格子裡的數字 = 目前能拿到的最大價值",
+  };
   frames.push({
     rowLabels,
     colLabels,
     cells: dp.map((r) => [...r]),
     highlight: [],
-    message: "0/1 背包：列是物品、欄是容量。dp[i][w] = 前 i 件、容量 w 的最大價值。",
+    ...tableHint,
+    message:
+      "三件東西 A、B、C，背包只能裝重量 5。\n每一格在問：只用到這一列為止的物品、容量剛好是這一欄時，最多能裝多少價值。最上面那列是「什麼都還沒選」，所以全是 0。",
   });
   for (let i = 1; i <= n; i++) {
     const { w, v, name } = items[i - 1];
     for (let cap = 0; cap <= W; cap++) {
-      dp[i][cap] = dp[i - 1][cap];
+      const skip = dp[i - 1][cap];
+      dp[i][cap] = skip;
       if (cap >= w) {
         dp[i][cap] = Math.max(dp[i][cap], dp[i - 1][cap - w] + v);
       }
+      const take = cap >= w ? dp[i - 1][cap - w] + v : null;
       frames.push({
         rowLabels,
         colLabels,
         cells: dp.map((r) => [...r]),
         highlight: [
-          { r: i, c: cap },
-          { r: i - 1, c: cap },
-          ...(cap >= w ? [{ r: i - 1, c: cap - w }] : []),
+          { r: i, c: cap, role: "current" },
+          { r: i - 1, c: cap, role: "read" },
+          ...(cap >= w ? [{ r: i - 1, c: cap - w, role: "read" as const }] : []),
         ],
+        ...tableHint,
         message:
           cap < w
-            ? `物品 ${name} 重 ${w} > 容量 ${cap}，只能不拿：${dp[i][cap]}`
-            : `物品 ${name}：不拿 ${dp[i - 1][cap]} vs 拿 ${
+            ? `輪到 ${name}（重 ${w}、價值 ${v}），容量只有 ${cap}。\n東西比背包還重，拿不了，這格直接抄上一列：${skip}。`
+            : `輪到 ${name}（重 ${w}、價值 ${v}），容量 ${cap}。\n不拿：上一列同容量是 ${skip}。\n拿：扣掉重量 ${w} 後剩 ${cap - w}，上一列那格是 ${
                 dp[i - 1][cap - w]
-              }+${v} → ${dp[i][cap]}`,
+              }，再加價值 ${v} → ${take}。\n兩者取大，這格寫 ${dp[i][cap]}。`,
       });
     }
   }
@@ -835,8 +869,9 @@ export function knapsackTrace(): TableFrame[] {
     rowLabels,
     colLabels,
     cells: dp.map((r) => [...r]),
-    highlight: [{ r: n, c: W }],
-    message: `答案 dp[${n}][${W}] = ${dp[n][W]}。每件物品最多拿一次。`,
+    highlight: [{ r: n, c: W, role: "current" }],
+    ...tableHint,
+    message: `右下角 ${dp[n][W]} 就是答案。每件最多拿一次；這裡最優是 A+B（重量 5、價值 7）。`,
   });
   return frames;
 }
@@ -850,14 +885,20 @@ export function lcsTrace(): TableFrame[] {
     Array(n + 1).fill(0)
   );
   const frames: TableFrame[] = [];
-  const rowLabels = ["ε", ...X.split("")];
-  const colLabels = ["ε", ...Y.split("")];
+  const rowLabels = ["（空）", ...X.split("")];
+  const colLabels = ["（空）", ...Y.split("")];
+  const tableHint = {
+    rowTitle: `字串 X = ${X}（往下多對一個字）`,
+    colTitle: `字串 Y = ${Y}（往右多對一個字）`,
+    legend: "格子 = 這兩個前綴的最長共同子序列長度",
+  };
   frames.push({
     rowLabels,
     colLabels,
     cells: dp.map((r) => [...r]),
     highlight: [],
-    message: `LCS("${X}", "${Y}")。字元相同取左上 +1，否則取上或左的較大值。`,
+    ...tableHint,
+    message: `左邊往下是 "${X}"，上面往右是 "${Y}"。\n子序列可以跳字，但不能調序。第一列／第一欄是空字串，長度都是 0。`,
   });
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {
@@ -868,12 +909,11 @@ export function lcsTrace(): TableFrame[] {
           colLabels,
           cells: dp.map((r) => [...r]),
           highlight: [
-            { r: i, c: j },
-            { r: i - 1, c: j - 1 },
+            { r: i, c: j, role: "current" },
+            { r: i - 1, c: j - 1, role: "read" },
           ],
-          message: `${X[i - 1]} = ${Y[j - 1]}，dp=${dp[i - 1][j - 1]}+1 = ${
-            dp[i][j]
-          }`,
+          ...tableHint,
+          message: `兩邊都對到「${X[i - 1]}」，可以收進共同子序列。\n看左上角舊長度 ${dp[i - 1][j - 1]}，加 1，這格寫 ${dp[i][j]}。`,
         });
       } else {
         dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
@@ -882,13 +922,12 @@ export function lcsTrace(): TableFrame[] {
           colLabels,
           cells: dp.map((r) => [...r]),
           highlight: [
-            { r: i, c: j },
-            { r: i - 1, c: j },
-            { r: i, c: j - 1 },
+            { r: i, c: j, role: "current" },
+            { r: i - 1, c: j, role: "read" },
+            { r: i, c: j - 1, role: "read" },
           ],
-          message: `${X[i - 1]} ≠ ${Y[j - 1]}，max(上 ${dp[i - 1][j]}, 左 ${
-            dp[i][j - 1]
-          }) = ${dp[i][j]}`,
+          ...tableHint,
+          message: `「${X[i - 1]}」和「${Y[j - 1]}」不一樣，這個字對不上。\n上面是 ${dp[i - 1][j]}（丟掉 X 這個字），左邊是 ${dp[i][j - 1]}（丟掉 Y 這個字）。取較大的 ${dp[i][j]}。`,
         });
       }
     }
@@ -897,8 +936,9 @@ export function lcsTrace(): TableFrame[] {
     rowLabels,
     colLabels,
     cells: dp.map((r) => [...r]),
-    highlight: [{ r: m, c: n }],
-    message: `LCS 長度 = ${dp[m][n]}（其中一解為 BCB）。`,
+    highlight: [{ r: m, c: n, role: "current" }],
+    ...tableHint,
+    message: `右下角 ${dp[m][n]} 就是 LCS 長度。其中一種排法是 BCB（可以跳字，不必連續）。`,
   });
   return frames;
 }
@@ -918,7 +958,10 @@ export function floydTrace(): TableFrame[] {
     colLabels: labels,
     cells: d.map((r) => r.map((x) => (x >= INF ? "∞" : x))),
     highlight: [],
-    message: "Floyd–Warshall：對每個中繼點 k，嘗試 i→k→j 是否更短。",
+    rowTitle: "從這一列的點出發",
+    colTitle: "走到這一欄的點",
+    legend: "∞＝目前還走不通",
+    message: "Floyd：這張表是「從列走到欄」的目前最短路。∞ 代表還沒走通過。每一輪多允許一個中繼站。",
   });
   for (let k = 0; k < 4; k++) {
     const next = d.map((r) => [...r]);
@@ -934,11 +977,11 @@ export function floydTrace(): TableFrame[] {
             { r: i, c: k },
             { r: k, c: j },
           ],
-          message: `k=${labels[k]}，檢查 ${labels[i]}→${labels[j]}：目前 ${
-            d[i][j] >= INF ? "∞" : d[i][j]
-          } vs ${labels[i]}→${labels[k]}→${labels[j]} = ${
-            d[i][k] >= INF || d[k][j] >= INF ? "∞" : cand
-          }`,
+          message: `這輪允許經過 ${labels[k]}。\n直走 ${labels[i]}→${labels[j]} 目前是 ${
+            d[i][j] >= INF ? "∞（走不通）" : d[i][j]
+          }。\n繞 ${labels[i]}→${labels[k]}→${labels[j]} 是 ${
+            d[i][k] >= INF || d[k][j] >= INF ? "∞（其中一段走不通）" : cand
+          }。取比較短的。`,
         });
         if (d[i][k] + d[k][j] < next[i][j]) next[i][j] = d[i][k] + d[k][j];
       }
@@ -949,7 +992,7 @@ export function floydTrace(): TableFrame[] {
       colLabels: labels,
       cells: d.map((r) => r.map((x) => (x >= INF ? "∞" : x))),
       highlight: [],
-      message: `以 ${labels[k]} 為中繼後的距離矩陣。`,
+      message: `中繼站 ${labels[k]} 這一輪結束。表上的數字都是「最多只能經過 ${labels[k]} 與更早中繼站」的最短路。`,
     });
   }
   frames.push({
@@ -972,6 +1015,22 @@ export function getArrayTrace(slug: string): ArrayFrame[] {
       return heapSortTrace();
     case "binary-search":
       return binarySearchTrace();
+    case "bubble-sort":
+      return bubbleSortTrace();
+    case "insertion-sort":
+      return insertionSortTrace();
+    case "selection-sort":
+      return selectionSortTrace();
+    case "counting-sort":
+      return countingSortTrace();
+    case "radix-sort":
+      return radixSortTrace();
+    case "quickselect":
+      return quickselectTrace();
+    case "binary-search-answer":
+      return binarySearchAnswerTrace();
+    case "heap":
+      return heapDsTrace();
     default:
       return [];
   }
@@ -997,6 +1056,8 @@ export function getGraphTrace(slug: string): GraphFrame[] {
       return vertexCoverTrace();
     case "max-flow":
       return maxFlowTrace();
+    case "scc":
+      return sccTrace();
     default:
       return [];
   }
@@ -1202,6 +1263,12 @@ export function graphLayout(slug: string): {
     return {
       nodes: FLOW_GRAPH.nodes,
       edges: FLOW_GRAPH.edges.map(([u, v, w]) => ({ u, v, w, directed: true })),
+    };
+  }
+  if (slug === "scc") {
+    return {
+      nodes: SCC_GRAPH.nodes,
+      edges: SCC_GRAPH.edges.map(([u, v]) => ({ u, v, directed: true })),
     };
   }
   return {
@@ -1546,7 +1613,7 @@ export function lisTrace(): TableFrame[] {
     colLabels: cols,
     cells: [a, [...dp]],
     highlight: [],
-    message: "LIS：dp[i] = 以 a[i] 結尾的最長遞增子序列長度。",
+    message: "LIS：每個位置問「以這個數字當結尾，最長能遞增多長」。一開始每個自己都是 1。",
   });
   for (let i = 0; i < n; i++) {
     for (let j = 0; j < i; j++) {
@@ -1562,8 +1629,8 @@ export function lisTrace(): TableFrame[] {
         ],
         message:
           a[j] < a[i]
-            ? `a[${j}]=${a[j]} < a[${i}]=${a[i]}，dp[i] ← max(${dp[i]}, ${dp[j]}+1)`
-            : `a[${j}]=${a[j]} ≮ ${a[i]}，略過`,
+            ? `看前面的 ${a[j]} 能不能接到現在的 ${a[i]} 前面。可以（${a[j]} < ${a[i]}），長度變成 ${dp[j]}+1。這格取 max，目前 ${Math.max(dp[i], dp[j] + 1)}。`
+            : `前面的 ${a[j]} 沒有比 ${a[i]} 小，接不上，略過。`,
       });
       if (a[j] < a[i]) dp[i] = Math.max(dp[i], dp[j] + 1);
     }
@@ -1573,7 +1640,7 @@ export function lisTrace(): TableFrame[] {
     colLabels: cols,
     cells: [a, [...dp]],
     highlight: [{ r: 1, c: dp.indexOf(Math.max(...dp)) }],
-    message: `LIS 長度 = max(dp) = ${Math.max(...dp)}，例如 1,2,5 或 3,4,5。`,
+    message: `最長是 ${Math.max(...dp)}。例如 1,2,5 或 3,4,5——可以跳過中間的數字，但順序不能改。`,
   });
   return frames;
 }
@@ -1587,32 +1654,44 @@ export function subsetSumTrace(): TableFrame[] {
   );
   for (let i = 0; i <= n; i++) dp[i][0] = true;
   const frames: TableFrame[] = [];
-  const rowLabels = ["∅", ...nums.map((x) => String(x))];
+  const rowLabels = ["還沒選", "考慮 3", "再加 4", "再加 5"];
   const colLabels = Array.from({ length: T + 1 }, (_, s) => String(s));
   const show = () => dp.map((r) => r.map((v) => (v ? "T" : "F")));
+  const yn = (b: boolean) => (b ? "可以" : "不行");
+  const tableHint = {
+    rowTitle: "已經考慮過哪些數字（往下 = 多一個）",
+    colTitle: "想湊出來的和 0～7",
+    legend: "T＝湊得到　F＝湊不到",
+  };
   frames.push({
     rowLabels,
     colLabels,
     cells: show(),
     highlight: [],
-    message: "Subset Sum：dp[i][s] = 前 i 個數字能否湊出 s。目標 7。",
+    ...tableHint,
+    message:
+      "數字 3、4、5，問能不能剛好加出 7。\n每一格只回答是非題：用到這一列為止的數字，能不能湊出這一欄的和。最左欄「和 = 0」永遠是 T——什麼都不拿，和就是 0。",
   });
   for (let i = 1; i <= n; i++) {
     const x = nums[i - 1]!;
     for (let s = 1; s <= T; s++) {
-      dp[i][s] = dp[i - 1][s] || (s >= x && dp[i - 1][s - x]);
+      const skip = dp[i - 1][s]!;
+      const canTake = s >= x;
+      const take = canTake ? dp[i - 1][s - x]! : false;
+      dp[i][s] = skip || take;
       frames.push({
         rowLabels,
         colLabels,
         cells: show(),
         highlight: [
-          { r: i, c: s },
-          { r: i - 1, c: s },
-          ...(s >= x ? [{ r: i - 1, c: s - x }] : []),
+          { r: i, c: s, role: "current" },
+          { r: i - 1, c: s, role: "read" },
+          ...(canTake ? [{ r: i - 1, c: s - x, role: "read" as const }] : []),
         ],
-        message: `數字 ${x}、和 ${s}：不拿 ${dp[i - 1][s] ? "T" : "F"}${
-          s >= x ? ` 或拿 ${dp[i - 1][s - x] ? "T" : "F"}` : "（太大不能拿）"
-        } → ${dp[i][s] ? "T" : "F"}`,
+        ...tableHint,
+        message: canTake
+          ? `輪到數字 ${x}，問能不能湊出 ${s}。\n不用 ${x}：看上一列「湊 ${s}」→ ${yn(skip)}。\n用掉 ${x}：剩下要湊 ${s - x}，看上一列 → ${yn(take)}。\n兩條路有一條通，這格就寫 T。結果：${yn(dp[i][s]!)}。`
+          : `輪到數字 ${x}，問能不能湊出 ${s}。\n${x} 比 ${s} 大，拿了會超，所以只能看「不用它」：上一列湊 ${s} 是 ${yn(skip)}。這格照抄。`,
       });
     }
   }
@@ -1620,8 +1699,9 @@ export function subsetSumTrace(): TableFrame[] {
     rowLabels,
     colLabels,
     cells: show(),
-    highlight: [{ r: n, c: T }],
-    message: `dp[n][7] = ${dp[n][T] ? "T，例如 3+4" : "F"}。這是偽多項式。`,
+    highlight: [{ r: n, c: T, role: "current" }],
+    ...tableHint,
+    message: `右下角是 T：用 3 和 4 可以湊出 7。\n這張表的大小跟「目標 7」成正比，所以叫偽多項式——目標寫成很大的數時，格子會爆炸。`,
   });
   return frames;
 }
@@ -1642,7 +1722,7 @@ export function editDistanceTrace(): TableFrame[] {
     colLabels,
     cells: dp.map((r) => [...r]),
     highlight: [],
-    message: `編輯距離("${X}","${Y}")。刪=下、插=右、替換=斜。`,
+    message: `要把 "${X}" 改成 "${Y}"。每一格是「左邊這個前綴」改成「上面那個前綴」最少要幾步。刪 = 看上面 +1，插 = 看左邊 +1，替換 = 看左上 +1（字一樣就 +0）。`,
   });
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {
@@ -1664,8 +1744,8 @@ export function editDistanceTrace(): TableFrame[] {
         ],
         message:
           cost === 0
-            ? `${X[i - 1]}=${Y[j - 1]}，沿用左上 ${dp[i - 1][j - 1]}`
-            : `替換/刪/插 → min(${dp[i - 1][j - 1]}+1, ${dp[i - 1][j]}+1, ${dp[i][j - 1]}+1) = ${dp[i][j]}`,
+            ? `「${X[i - 1]}」和「${Y[j - 1]}」一樣，不用改這個字。沿用左上角 ${dp[i - 1][j - 1]} 步。`
+            : `「${X[i - 1]}」要變成「${Y[j - 1]}」。三種改法：\n替換（左上 ${dp[i - 1][j - 1]}+1）、刪掉 X 這個字（上 ${dp[i - 1][j]}+1）、插入 Y 這個字（左 ${dp[i][j - 1]}+1）。\n最少是 ${dp[i][j]}。`,
       });
     }
   }
@@ -1674,7 +1754,7 @@ export function editDistanceTrace(): TableFrame[] {
     colLabels,
     cells: dp.map((r) => [...r]),
     highlight: [{ r: m, c: n }],
-    message: `距離 ${dp[m][n]}（把 A 換成 U）。`,
+    message: `最少 ${dp[m][n]} 步：把中間的 A 換成 U，CAT 就變成 CUT。`,
   });
   return frames;
 }
@@ -1691,7 +1771,7 @@ export function matrixChainTrace(): TableFrame[] {
     colLabels: labels,
     cells: show(),
     highlight: [],
-    message: "矩陣鏈：m[i][j] = 乘 Aᵢ…Aⱼ 的最少純量乘法。對角為 0。",
+    message: "矩陣相乘可以換括號，答案一樣、乘法次數不一樣。格子 m[i][j] = 把第 i 到第 j 個矩陣乘完，最少要幾次數字相乘。對角是 0（只剩一個矩陣，不用乘）。",
   });
   for (let len = 2; len <= n; len++) {
     for (let i = 0; i <= n - len; i++) {
@@ -1710,7 +1790,7 @@ export function matrixChainTrace(): TableFrame[] {
             { r: i, c: k },
             { r: k + 1, c: j },
           ],
-          message: `切在 A${k + 1} 後：${m[i][k]}+${m[k + 1][j]}+${p[i]}×${p[k + 1]}×${p[j + 1]}=${cost}`,
+          message: `最後一次乘法切在 A${k + 1} 後面：左邊 ${m[i][k]} 次 + 右邊 ${m[k + 1][j]} 次 + 把兩塊乘在一起 ${p[i]}×${p[k + 1]}×${p[j + 1]} = ${cost}。`,
         });
         if (cost < m[i][j]) m[i][j] = cost;
       }
@@ -1739,7 +1819,7 @@ export function unboundedKnapsackTrace(): TableFrame[] {
     colLabels,
     cells: show(),
     highlight: [{ r: 0, c: 0 }],
-    message: "零錢／無限背包：每種硬幣可用多次。dp[x] = 湊 x 的最少枚數。",
+    message: "零錢：每種硬幣能用很多次。格子 dp[x] = 湊出 x 元最少要幾枚。0 元是 0 枚。",
   });
   for (const c of coins) {
     for (let x = c; x <= W; x++) {
@@ -1752,9 +1832,11 @@ export function unboundedKnapsackTrace(): TableFrame[] {
           { r: 0, c: x },
           { r: 0, c: x - c },
         ],
-        message: `硬幣 ${c}：dp[${x}] ← min(原, dp[${x - c}]+1) = ${
+        message: `拿出一枚 ${c} 元，剩下 ${x - c} 元先前最少 ${
+          dp[x - c] === Infinity ? "還湊不出" : `${dp[x - c]} 枚`
+        }。加上這枚是 ${
           dp[x] === Infinity ? "∞" : dp[x]
-        }`,
+        } 枚。和「不用這枚」比，留下較少的。`,
       });
     }
   }

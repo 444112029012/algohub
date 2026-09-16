@@ -249,7 +249,7 @@ DFS-VISIT(u)
         explanation: "兩者都是 Θ(V+E)，差在探索策略。",
       },
     ],
-    related: ["bfs", "topo-sort", "union-find"],
+    related: ["bfs", "topo-sort", "scc"],
   },
   {
     slug: "dijkstra",
@@ -384,7 +384,7 @@ def dijkstra(graph: dict[str, list[tuple[str, int]]], start: str):
         explanation: "最多 O(E) 次 decrease/push，每次 O(log V)。",
       },
     ],
-    related: ["bfs", "floyd-warshall", "bellman-ford"],
+    related: ["bfs", "bellman-ford", "heap"],
   },
   {
     slug: "floyd-warshall",
@@ -394,8 +394,8 @@ def dijkstra(graph: dict[str, list[tuple[str, int]]], start: str):
     examWeight: "高",
     tags: ["DP", "全點對", "O(V³)"],
     summary:
-      "動態規劃求所有點對最短路：允許的中繼點從 1..k 逐步放寬。三層迴圈，Θ(V³)，程式極短，手填矩陣是常考題。",
-    idea: "d[k][i][j] = min( d[k-1][i][j], d[k-1][i][k] + d[k-1][k][j] )。實作滾成二維陣列，k 在最外層。可處理負權；若某次 d[i][i]<0 則有負環。",
+      "一次求出每對點之間的最短路。想法是：每一輪多允許一個中繼站，看「直走」和「繞過這個站」誰比較短。三層迴圈 Θ(V³)，程式很短，手填矩陣常考。",
+    idea: "表上 (i,j) 是從 i 走到 j 目前的最短距離。最外層迴圈 k 代表「現在可以經過 k」。新距離取 min(原本, i→k 的距離 + k→j 的距離)。有負邊也可以；若某次看到自己到自己是負的，就有負環。",
     whenToUse: [
       "V 不大（約 ≤400）的全點對最短路",
       "需要偵測負環或傳遞閉包（邊權改成布林 OR-AND）",
@@ -751,6 +751,6 @@ def topo_sort(n: int, edges: list[tuple[int, int]]) -> list[int] | None:
         explanation: "拓樸序保證鬆弛順序正確，不必 heap。",
       },
     ],
-    related: ["dfs", "bfs", "dijkstra"],
+    related: ["dfs", "scc", "two-sat"],
   },
 ];

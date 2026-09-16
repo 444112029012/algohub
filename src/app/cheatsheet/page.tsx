@@ -17,6 +17,8 @@ const graphRows = [
   ["Kruskal", "O(E log E)", "MST、稀疏圖", "並查集成環判斷"],
   ["Prim", "O(V²) 或 O(E log V)", "MST、稠密圖", "從點長樹"],
   ["Kahn 拓樸", "Θ(V+E)", "DAG 排程", "排不出來就有環"],
+  ["SCC Kosaraju／Tarjan", "Θ(V+E)", "有向圖強連通、縮點", "第二次要走反向圖"],
+  ["2-SAT", "Θ(n+m)", "implication + SCC", "x 與 ¬x 同分量 ⇒ 無解"],
   ["最大流 EK", "O(V E²)", "增廣路、最小割", "記得反向邊"],
 ];
 
@@ -123,6 +125,42 @@ export default function CheatsheetPage() {
             </thead>
             <tbody>
               {dpRows.map((r) => (
+                <tr key={r[0]} className="border-t border-border">
+                  {r.map((c) => (
+                    <td key={c} className="px-4 py-2">
+                      {c}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
+
+      <Card className="paper-card overflow-hidden">
+        <CardHeader>
+          <CardTitle>搜尋與資料結構</CardTitle>
+        </CardHeader>
+        <CardContent className="overflow-x-auto px-0 pb-0">
+          <table className="w-full min-w-[640px] text-left text-sm">
+            <thead className="bg-muted/60 text-xs text-muted-foreground">
+              <tr>
+                {["主題", "時間", "重點", "別搞混"].map((h) => (
+                  <th key={h} className="px-4 py-2 font-medium">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["二分搜尋", "Θ(log n)", "已排序／單調", "lo/hi 邊界"],
+                ["答案上二分", "Θ(T log R)", "謂詞單調", "搜的是答案不是下標"],
+                ["Quickselect", "期望 Θ(n)", "第 k 小、只走一側", "最壞 n²；BFPRT 最壞線性"],
+                ["Binary Heap", "insert／pop O(log n)", "建堆 Θ(n)", "0-based 左孩 2i+1"],
+                ["並查集", "α(n) 均攤", "路徑壓縮＋按秩", "不支援刪邊"],
+              ].map((r) => (
                 <tr key={r[0]} className="border-t border-border">
                   {r.map((c) => (
                     <td key={c} className="px-4 py-2">

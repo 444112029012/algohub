@@ -498,7 +498,7 @@ function heapSort(a: number[]) {
         explanation: "原地不穩定，這是和 Merge Sort 對照的標準答案。",
       },
     ],
-    related: ["merge-sort", "quick-sort", "dijkstra"],
+    related: ["merge-sort", "quick-sort", "heap"],
   },
   {
     slug: "binary-search",
@@ -636,6 +636,6 @@ def lower_bound(a: list[int], t: int) -> int:
         explanation: "相等還可能有更左邊的相同值，要收 hi=mid。",
       },
     ],
-    related: ["merge-sort", "quick-sort", "master-theorem"],
+    related: ["binary-search-answer", "quickselect", "master-theorem"],
   },
 ];

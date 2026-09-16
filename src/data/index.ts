@@ -1,10 +1,14 @@
 import { dpExtraLessons } from "./dp-extra";
 import { dpLessons } from "./dp";
+import { dsExtraLessons } from "./ds-extra";
 import { graphExtraLessons } from "./graph-extra";
 import { graphLessons } from "./graph";
+import { graphSccLessons } from "./graph-scc";
 import { greedyExtraLessons } from "./greedy-extra";
 import { npLessons } from "./np";
 import { otherLessons } from "./other";
+import { searchExtraLessons } from "./search-extra";
+import { sortingExtraLessons } from "./sorting-extra";
 import { sortingLessons } from "./sorting";
 import { CATEGORIES, type Algorithm, type CategoryId } from "./types";
 
@@ -13,12 +17,16 @@ export type { Algorithm, CategoryId };
 
 export const algorithms: Algorithm[] = [
   ...sortingLessons,
+  ...sortingExtraLessons,
+  ...searchExtraLessons,
   ...graphLessons,
   ...graphExtraLessons,
+  ...graphSccLessons,
   ...dpLessons,
   ...dpExtraLessons,
   ...greedyExtraLessons,
   ...npLessons,
+  ...dsExtraLessons,
   ...otherLessons,
 ];
 
@@ -86,5 +94,23 @@ export const sortingCheat = [
     space: "Θ(1)",
     stable: false,
     inPlace: true,
+  },
+  {
+    name: "計數排序",
+    best: "Θ(n+k)",
+    avg: "Θ(n+k)",
+    worst: "Θ(n+k)",
+    space: "Θ(n+k)",
+    stable: true,
+    inPlace: false,
+  },
+  {
+    name: "基數排序 LSD",
+    best: "Θ(d(n+r))",
+    avg: "Θ(d(n+r))",
+    worst: "Θ(d(n+r))",
+    space: "Θ(n+r)",
+    stable: true,
+    inPlace: false,
   },
 ];

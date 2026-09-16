@@ -36,6 +36,12 @@ export function Catalog() {
     <div className="space-y-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <input
+          type="search"
+          name="catalog-q"
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+          suppressHydrationWarning
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="搜尋：Dijkstra、穩定排序、主定理…"

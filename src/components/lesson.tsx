@@ -85,8 +85,18 @@ export function Lesson({ algorithm }: { algorithm: Algorithm }) {
         {algorithm.visualizer !== "none" && (
           <section id="demo" className="scroll-mt-20 space-y-3">
             <h2 className="font-heading text-2xl">逐步示意</h2>
-            <p className="text-sm text-muted-foreground">
-              用同一組小例子把演算法跑一遍。先按「下一步」跟手算，再按播放看連續過程。
+            <p className="text-sm leading-6 text-muted-foreground">
+              {algorithm.visualizer === "table"
+                ? "這是填表過程，不是「格子自己在跳」。金框是正在寫的那一格，淡藍是這一步去抄的舊格子。先讀底下的旁白，再對表。建議按「下一步」，不要先按播放。"
+                : algorithm.visualizer === "graph"
+                  ? "紅點是現在走到的點。顏色圖例依演算法而變，先對一下再按「下一步」。底下那句旁白在講「這一動在做什麼」。"
+                  : algorithm.visualizer === "array"
+                    ? "色塊是正在比較、當樞紐、或已經定位的位置。先看底下旁白，再對上面的數字。建議按「下一步」。"
+                    : algorithm.visualizer === "sets"
+                      ? "圓點是元素：金＝這步新蓋到，綠＝已經蓋過。每個集合旁邊的「新蓋」是這步還能多蓋幾個。"
+                      : algorithm.visualizer === "intervals"
+                        ? "紅＝正在考慮這段時間，綠＝已選，灰＝跟已選重疊所以丟掉。"
+                        : "用同一組小例子把演算法跑一遍。"}
             </p>
             <Card className="paper-card">
               <CardContent className="pt-4">
