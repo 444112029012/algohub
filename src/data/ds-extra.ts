@@ -10,7 +10,7 @@ export const dsExtraLessons: Algorithm[] = [
     tags: ["完全二元樹", "優先佇列", "O(log n)"],
     summary:
       "用陣列存完全二元樹，父節點 ≥（或 ≤）孩子。取最值 O(1)，插入／刪最值 O(log n)，一次建堆 Θ(n)。這是 Dijkstra、Huffman、Heap Sort 的零件，要和「堆積排序」分開記。",
-    idea: "0-based：左孩 2i+1、右孩 2i+2、父 ⌊(i-1)/2⌋。插入放在尾端再上浮；刪最值把尾端搬到根再下沉。Build-Heap 從最後非葉往根 heapify，高度 h 的節點約 n/2^{h+1}，總成本 Θ(n)。",
+    idea: "動畫上面是樹、下面是同一份陣列。0-based：左孩 2i+1、右孩 2i+2、父 ⌊(i-1)/2⌋。插入放在尾端再上浮；刪最值把尾端搬到根再下沉。Build-Heap 從最後非葉往根 heapify，總成本 Θ(n)，不是 n 次插入的 Θ(n log n)。左右孩子沒有誰一定比較小，所以這不是二元搜尋樹。",
     whenToUse: [
       "重複取最小／最大：排程、Huffman、Dijkstra、Prim",
       "需要 k 個最大：大小 k 的 heap",
@@ -173,6 +173,6 @@ BUILD-MAX-HEAP(A)
         explanation: "heap 只保證根是最值，中序不是排序。",
       },
     ],
-    related: ["heap-sort", "dijkstra", "huffman"],
+    related: ["heap-sort", "bst", "dijkstra"],
   },
 ];

@@ -10,6 +10,8 @@ import {
   getSetCoverTrace,
   getTableTrace,
   graphLayout,
+  bellmanFordTrace,
+  spfaTrace,
   type ArrayKind,
   type CoverElemState,
   type CoverSetState,
@@ -112,13 +114,109 @@ function usePlayer(n: number, ms = 900) {
   };
 }
 
+function HeapTree({
+  values,
+  highlights,
+}: {
+  values: number[];
+  highlights: { index: number; kind: ArrayKind }[];
+}) {
+  if (!values.length) return null;
+  const pos = (i: number) => {
+    const level = Math.floor(Math.log2(i + 1));
+    const indexInLevel = i - (2 ** level - 1);
+    const count = 2 ** level;
+    return { x: ((indexInLevel + 0.5) / count) * 400 + 15, y: 22 + level * 52 };
+  };
+  const fill: Record<ArrayKind, string> = {
+    compare: "#e7c46a",
+    pivot: "#c23b22",
+    sorted: "#2f9e8f",
+    left: "#7dd3fc",
+    right: "#fcd34d",
+    write: "#8b5cf6",
+    mid: "#c23b22",
+    range: "#2a3d66",
+    swap: "#c23b22",
+  };
+  const levels = Math.floor(Math.log2(Math.max(1, values.length - 1))) + 1;
+  const height = 36 + levels * 52;
+  return (
+    <div className="space-y-1">
+      <p className="text-xs text-muted-foreground">同一份陣列畫成完全二元樹。父節點要 ≥ 兩個孩子。</p>
+      <svg viewBox={`0 0 430 ${height}`} className="h-auto w-full overflow-visible">
+        {values.map((_, i) => {
+          if (i === 0) return null;
+          const parent = Math.floor((i - 1) / 2);
+          const a = pos(parent);
+          const b = pos(i);
+          const dx = b.x - a.x;
+          const dy = b.y - a.y;
+          const len = Math.hypot(dx, dy) || 1;
+          const r = 18;
+          return (
+            <line
+              key={`e${i}`}
+              x1={a.x + (dx / len) * r}
+              y1={a.y + (dy / len) * r}
+              x2={b.x - (dx / len) * r}
+              y2={b.y - (dy / len) * r}
+              stroke="#b7aa94"
+              strokeWidth={1.6}
+            />
+          );
+        })}
+        {values.map((v, i) => {
+          const { x, y } = pos(i);
+          const kind = highlights.find((h) => h.index === i)?.kind;
+          return (
+            <g key={i}>
+              <circle cx={x} cy={y} r={16} fill={kind ? fill[kind] : "#2a3d66"} stroke="#1a2744" />
+              <text x={x} y={y + 4} textAnchor="middle" className="fill-white text-[12px] font-semibold">
+                {v}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+function BellmanModes() {
+  const [mode, setMode] = useState<"scan" | "queue">("scan");
+  const frames = useMemo(
+    () => (mode === "scan" ? bellmanFordTrace() : spfaTrace()),
+    [mode]
+  );
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" variant={mode === "scan" ? "default" : "outline"} onClick={() => setMode("scan")}>
+          每一輪掃全部邊
+        </Button>
+        <Button size="sm" variant={mode === "queue" ? "default" : "outline"} onClick={() => setMode("queue")}>
+          只處理有變短的點
+        </Button>
+      </div>
+      <p className="text-xs leading-5 text-muted-foreground">
+        {mode === "scan"
+          ? "距離寫在點的下方。這一輪改短了也不代表定案，下一輪還可能再變。"
+          : "黃點在佇列裡。同一個點若已經在佇列中，不要再排一次，但距離仍可以更新。"}
+      </p>
+      <GraphVis key={mode} slug="bellman-ford" frames={frames} legend={mode === "scan" ? "bellman-ford" : "spfa"} />
+    </div>
+  );
+}
+
 export function AlgorithmVisualizer({ slug }: { slug: string }) {
   const array = useMemo(() => getArrayTrace(slug), [slug]);
   const graph = useMemo(() => getGraphTrace(slug), [slug]);
   const table = useMemo(() => getTableTrace(slug), [slug]);
   const sets = useMemo(() => getSetCoverTrace(slug), [slug]);
   const intervals = useMemo(() => getIntervalTrace(slug), [slug]);
-  if (array.length) return <ArrayVis frames={array} />;
+  if (array.length) return <ArrayVis frames={array} tree={slug === "heap" || slug === "heap-sort"} />;
+  if (slug === "bellman-ford") return <BellmanModes />;
   if (graph.length) return <GraphVis slug={slug} frames={graph} />;
   if (table.length) return <TableVis frames={table} />;
   if (sets.length) return <SetCoverVis frames={sets} />;
@@ -126,13 +224,20 @@ export function AlgorithmVisualizer({ slug }: { slug: string }) {
   return null;
 }
 
-function ArrayVis({ frames }: { frames: ReturnType<typeof getArrayTrace> }) {
+function ArrayVis({
+  frames,
+  tree,
+}: {
+  frames: ReturnType<typeof getArrayTrace>;
+  tree?: boolean;
+}) {
   const p = usePlayer(frames.length);
   const f = frames[p.i]!;
   const kinds = new Set(f.highlights.map((h) => h.kind));
   const max = Math.max(1, ...frames.flatMap((fr) => fr.array));
   return (
     <div className="space-y-4">
+      {tree ? <HeapTree values={f.array} highlights={f.highlights} /> : null}
       <div className="flex h-44 items-end justify-center gap-1.5 sm:gap-2">
         {f.array.map((v, idx) => {
           const hi = f.highlights.find((h) => h.index === idx);
@@ -210,12 +315,35 @@ function graphLegend(slug: string): { color: string; label: string; dashed?: boo
       { color: EDGE_STROKE.rejected, label: "會成環，丟掉", dashed: true },
     ];
   }
-  if (slug === "dijkstra" || slug === "bellman-ford") {
+  if (slug === "bellman-ford") {
     return [
-      { color: NODE_FILL.queued, label: "距離還可能改" },
-      { color: NODE_FILL.current, label: "這一步取出的點" },
-      { color: NODE_FILL.visited, label: "最短距離已確定" },
-      { color: EDGE_STROKE.relaxed, label: "這步在鬆弛的邊" },
+      { color: NODE_FILL.queued, label: "這一輪變短了，還沒定案" },
+      { color: EDGE_STROKE.relaxed, label: "這步把距離改短" },
+      { color: EDGE_STROKE.rejected, label: "走這條沒有更短", dashed: true },
+    ];
+  }
+  if (slug === "spfa") {
+    return [
+      { color: NODE_FILL.queued, label: "在佇列裡，等一下要處理" },
+      { color: NODE_FILL.current, label: "正在看它走出去的邊" },
+      { color: EDGE_STROKE.relaxed, label: "這步把距離改短" },
+      { color: EDGE_STROKE.rejected, label: "走這條沒有更短", dashed: true },
+    ];
+  }
+  if (slug === "dijkstra") {
+    return [
+      { color: NODE_FILL.queued, label: "距離改過，還沒被挑中" },
+      { color: NODE_FILL.current, label: "這一步挑中、距離定案" },
+      { color: NODE_FILL.visited, label: "已經定案" },
+      { color: EDGE_STROKE.relaxed, label: "這步把距離改短" },
+      { color: EDGE_STROKE.rejected, label: "沒有更短", dashed: true },
+    ];
+  }
+  if (slug === "bst") {
+    return [
+      { color: NODE_FILL.current, label: "這一步正在比較或剛放上的點" },
+      { color: NODE_FILL.visited, label: "已經在樹上" },
+      { color: EDGE_STROKE.tree, label: "父節點指向孩子" },
     ];
   }
   if (slug === "max-flow") {
@@ -241,25 +369,144 @@ function graphLegend(slug: string): { color: string; label: string; dashed?: boo
   ];
 }
 
+const NODE_R = 18;
+
+function edgeGeometry(
+  a: { x: number; y: number },
+  b: { x: number; y: number },
+  directed: boolean
+) {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const ux = dx / len;
+  const uy = dy / len;
+  const pad = 5;
+  const arrow = directed ? 8 : 0;
+  return {
+    x1: a.x + ux * (NODE_R + pad),
+    y1: a.y + uy * (NODE_R + pad),
+    x2: b.x - ux * (NODE_R + pad + arrow),
+    y2: b.y - uy * (NODE_R + pad + arrow),
+    px: -uy,
+    py: ux,
+  };
+}
+
+function pointSegDistance(
+  p: { x: number; y: number },
+  a: { x: number; y: number },
+  b: { x: number; y: number }
+) {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const l2 = dx * dx + dy * dy || 1;
+  const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / l2));
+  return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+}
+
+function clearanceBend(
+  a: { x: number; y: number },
+  b: { x: number; y: number },
+  px: number,
+  py: number,
+  nodes: { x: number; y: number }[]
+) {
+  const blocked = nodes.some(
+    (n) => n !== a && n !== b && pointSegDistance(n, a, b) < NODE_R + 8
+  );
+  if (!blocked) return 0;
+  const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  const reach = NODE_R + 36;
+  const score = (sign: number) => {
+    const x = mid.x + px * sign * reach;
+    const y = mid.y + py * sign * reach;
+    return nodes.reduce((sum, n) => sum + Math.hypot(n.x - x, n.y - y), 0);
+  };
+  return (score(1) >= score(-1) ? 1 : -1) * reach;
+}
+
+function distOffset(
+  n: { id: string; x: number; y: number },
+  nodes: { id: string; x: number; y: number }[],
+  edges: { u: string; v: string }[]
+) {
+  const dirs: [number, number][] = [
+    [0, -1],
+    [1, -0.45],
+    [1, 0.45],
+    [0, 1],
+    [-1, 0.45],
+    [-1, -0.45],
+  ];
+  const neighbors = edges
+    .filter((e) => e.u === n.id || e.v === n.id)
+    .map((e) => nodes.find((x) => x.id === (e.u === n.id ? e.v : e.u)))
+    .filter((x): x is { id: string; x: number; y: number } => Boolean(x));
+  let best = dirs[0];
+  let bestScore = -Infinity;
+  for (const [dx, dy] of dirs) {
+    const mag = Math.hypot(dx, dy);
+    const ux = dx / mag;
+    const uy = dy / mag;
+    let score = neighbors.length === 0 ? -dy : 0;
+    for (const o of neighbors) {
+      const vx = o.x - n.x;
+      const vy = o.y - n.y;
+      const vmag = Math.hypot(vx, vy) || 1;
+      score -= (ux * vx + uy * vy) / vmag;
+    }
+    if (n.x < 96 && dx < 0) score -= 1.4;
+    if (n.x > 340 && dx > 0) score -= 1.4;
+    if (n.y < 70 && dy < 0) score -= 0.25;
+    if (n.y > 170 && dy > 0) score -= 0.25;
+    if (score > bestScore) {
+      bestScore = score;
+      best = [dx, dy];
+    }
+  }
+  const mag = Math.hypot(best[0], best[1]);
+  return { x: n.x + (best[0] / mag) * 34, y: n.y + (best[1] / mag) * 32 };
+}
+
+function EdgeChip({ x, y, text }: { x: number; y: number; text: string }) {
+  const w = Math.max(18, text.length * 7 + 10);
+  return (
+    <g>
+      <rect x={x - w / 2} y={y - 9} width={w} height={16} rx={4} fill="var(--card)" stroke="var(--border)" />
+      <text x={x} y={y + 3} textAnchor="middle" className="fill-foreground text-[11px] font-semibold">
+        {text}
+      </text>
+    </g>
+  );
+}
+
 function GraphVis({
   slug,
   frames,
+  legend,
 }: {
   slug: string;
   frames: ReturnType<typeof getGraphTrace>;
+  legend?: string;
 }) {
-  const p = usePlayer(frames.length);
+  const p = usePlayer(frames.length, 1400);
   const f = frames[p.i]!;
   const layout = graphLayout(slug);
+  const shown = f.shown ? new Set(f.shown) : null;
+  const visibleEdges = layout.edges.filter(
+    (e) => !shown || (shown.has(e.u) && shown.has(e.v))
+  );
+  const arrowId = `arrow-${slug}`;
 
   return (
     <div className="space-y-4">
-      <svg viewBox="0 0 430 240" className="h-auto w-full overflow-visible">
+      <svg viewBox="-16 -36 462 320" className="h-auto w-full overflow-visible">
         <defs>
           <marker
-            id="arrow"
+            id={arrowId}
             viewBox="0 0 10 10"
-            refX="18"
+            refX="9"
             refY="5"
             markerWidth="7"
             markerHeight="7"
@@ -268,36 +515,46 @@ function GraphVis({
             <path d="M 0 0 L 10 5 L 0 10 z" fill="#6b6256" />
           </marker>
         </defs>
-        {layout.edges.map((e) => {
+        {visibleEdges.map((e) => {
           const a = layout.nodes.find((n) => n.id === e.u)!;
           const b = layout.nodes.find((n) => n.id === e.v)!;
           const key = e.directed ? `${e.u}>${e.v}` : edgeKey(e.u, e.v);
           const st = f.edgeStates[key] ?? "idle";
-          const mx = (a.x + b.x) / 2;
-          const my = (a.y + b.y) / 2;
+          const geom = edgeGeometry(a, b, e.directed);
+          const mutual = e.directed && visibleEdges.some((o) => o.u === e.v && o.v === e.u);
+          const side = e.u < e.v ? 1 : -1;
+          const avoid = clearanceBend(a, b, geom.px, geom.py, layout.nodes);
+          let bend = mutual ? 26 * side : 0;
+          if (avoid) bend = Math.sign(avoid) * Math.max(Math.abs(bend), Math.abs(avoid));
           const label = f.edgeLabels?.[key] ?? (e.w !== undefined ? String(e.w) : "");
+          const labelW = Math.max(18, label.length * 7 + 10);
+          const lift = bend === 0 ? labelW / 2 + 10 : bend + Math.sign(bend) * (labelW / 2 + 6);
+          const mx = (geom.x1 + geom.x2) / 2 + geom.px * lift;
+          const my = (geom.y1 + geom.y2) / 2 + geom.py * lift;
+          const cpx = (geom.x1 + geom.x2) / 2 + geom.px * bend;
+          const cpy = (geom.y1 + geom.y2) / 2 + geom.py * bend;
+          const d = bend
+            ? `M ${geom.x1} ${geom.y1} Q ${cpx} ${cpy} ${geom.x2} ${geom.y2}`
+            : `M ${geom.x1} ${geom.y1} L ${geom.x2} ${geom.y2}`;
           return (
             <g key={key}>
-              <line
-                x1={a.x}
-                y1={a.y}
-                x2={b.x}
-                y2={b.y}
+              <path
+                d={d}
+                fill="none"
                 stroke={EDGE_STROKE[st]}
                 strokeWidth={st === "tree" || st === "relaxed" ? 3.5 : st === "idle" ? 1.6 : 3}
                 strokeDasharray={st === "rejected" ? "4 4" : undefined}
-                markerEnd={e.directed ? "url(#arrow)" : undefined}
+                markerEnd={e.directed ? `url(#${arrowId})` : undefined}
               />
-              {label && (
-                <text x={mx + 6} y={my - 6} className="fill-foreground text-[11px]">
-                  {label}
-                </text>
-              )}
+              {label && <EdgeChip x={mx} y={my} text={label} />}
             </g>
           );
         })}
         {layout.nodes.map((n) => {
+          if (shown && !shown.has(n.id)) return null;
           const st = f.nodeStates[n.id] ?? "idle";
+          const dist = f.dist?.[n.id];
+          const at = dist === undefined ? null : distOffset(n, layout.nodes, visibleEdges);
           return (
             <g key={n.id}>
               <circle
@@ -317,6 +574,7 @@ function GraphVis({
               >
                 {n.id}
               </text>
+              {at && dist !== undefined && <EdgeChip x={at.x} y={at.y} text={String(dist)} />}
             </g>
           );
         })}
@@ -330,7 +588,7 @@ function GraphVis({
         </span>
       </div>
       <div className="flex flex-wrap gap-3 text-[11px] text-muted-foreground">
-        {graphLegend(slug).map((item) => (
+        {graphLegend(legend ?? slug).map((item) => (
           <Legend key={item.label} color={item.color} label={item.label} dashed={item.dashed} />
         ))}
       </div>

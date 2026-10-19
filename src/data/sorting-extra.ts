@@ -336,6 +336,7 @@ export const sortingExtraLessons: Algorithm[] = [
     whenToUse: [
       "k = O(n) 的整數鍵（成績 0–100、位元 0–9）",
       "作為 LSD radix 的穩定子程序",
+      "鍵是小數或範圍很大時改用桶排序：先依區間分桶，桶內再排序。它和計數、基數都不是比較排序",
     ],
     examTips: [
       "比較排序下界 Ω(n log n) 對它無效——它不是比較排序。",
@@ -450,6 +451,7 @@ export const sortingExtraLessons: Algorithm[] = [
     whenToUse: [
       "固定位數的整數或定長字串",
       "32-bit 可拆 4 個 8-bit 位元組，r=256",
+      "桶排序依數值區間分桶；基數排序依每一位數字，而且每一輪必須穩定",
     ],
     examTips: [
       "必須穩定。不穩定的位數排序會把低位成果打亂。",

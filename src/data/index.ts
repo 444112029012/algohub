@@ -1,5 +1,6 @@
 import { dpExtraLessons } from "./dp-extra";
 import { dpLessons } from "./dp";
+import { dsBasicLessons } from "./ds-basics";
 import { dsExtraLessons } from "./ds-extra";
 import { graphExtraLessons } from "./graph-extra";
 import { graphLessons } from "./graph";
@@ -26,6 +27,7 @@ export const algorithms: Algorithm[] = [
   ...dpExtraLessons,
   ...greedyExtraLessons,
   ...npLessons,
+  ...dsBasicLessons,
   ...dsExtraLessons,
   ...otherLessons,
 ];
