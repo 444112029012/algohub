@@ -10,7 +10,7 @@ export const otherLessons: Algorithm[] = [
     tags: ["資料結構", "Kruskal", "路徑壓縮"],
     summary:
       "維護不相交集合：Find 問兩人是否同組，Union 合併。搭配路徑壓縮與按秩合併，單次操作幾乎是常數 α(n)。Kruskal、連通性離線詢問都靠它。",
-    idea: "每個集合是一棵樹，根是代表元。Find 沿父指標走到根；Union 把較淺的根掛到較深的根。路徑壓縮：找的路上點都直接掛到根。",
+    idea: "六個人一開始各成一組。先把 A 和 B 合併，B 的父親改成 A。再處理 B 和 E 時，先問 B 的老大是誰（已經是 A），再把 E 掛到 A。兩人是否同組，就是看老大是不是同一個人。找老大的路上把沿路的人直接改掛到老大，樹就不會變成一條長鏈，這叫路徑壓縮。",
     whenToUse: [
       "動態連通、最小生成樹",
       "等價關係閉包、帳號合併",
@@ -39,7 +39,7 @@ export const otherLessons: Algorithm[] = [
       ],
       result: "最後幾乎全部連成同一集合（見 Kruskal 動畫）",
     },
-    visualizer: "none",
+    visualizer: "table",
     pseudocode: `MAKE-SET(x): parent[x]←x; rank[x]←0
 
 FIND(x)
@@ -145,7 +145,7 @@ UNION(x, y)
     tags: ["字串", "LPS", "線性時間"],
     summary:
       "在文本 T 裡找模式 P，預先算 LPS（最長真前後綴），匹配失敗時模式自己對齊，不必把文本指標回退。時間 Θ(n+m)，手算 LPS 是熱門題。",
-    idea: "暴力匹配失敗會把 T 的指標往回。KMP 利用「P 的前綴也是後綴」的資訊，只移動 P。LPS[i] = P[0..i] 最長的真前後綴長度。",
+    idea: "模式 ABABC 對到一半失敗時，不要把文章的指針退回去。ABAB 的開頭 AB 同時也是它的結尾，所以失敗後模式只滑到還對得上的那一段。這張「最長真前後綴」表就是 LPS，手算結果是 0, 0, 1, 2, 0。真前後綴必須比整段短，不能把自己算進去。",
     whenToUse: [
       "單模式、長文本的多次失敗會很痛的情況",
       "需要保證線性時間的匹配",
@@ -176,7 +176,7 @@ UNION(x, y)
       ],
       result: "LPS = [0, 0, 1, 2, 0]",
     },
-    visualizer: "none",
+    visualizer: "table",
     pseudocode: `COMPUTE-LPS(P)
   lps[0] ← 0; len ← 0; i ← 1
   while i < m
@@ -297,7 +297,7 @@ KMP-SEARCH(T, P)
     tags: ["貪婪", "前綴碼", "優先佇列"],
     summary:
       "依字元頻率建最優前綴碼：每次合併頻率最小的兩棵樹。考試愛考「畫樹、寫碼、算平均長度」。",
-    idea: "前綴碼：沒有任何碼是另一個碼的前綴，才能無歧義解碼。貪婪：頻率最低的兩個符號應該有最長的碼，所以先合併它們。",
+    idea: "A 出現 5 次、B 2 次、C 和 D 各 1 次、E 3 次。碼不能有一個是另一個的開頭，解碼才不會分岔。出現少的字可以碼比較長，所以先把最少的 C 和 D 捆成頻率 2，再跟下一個最少的捆。每次都捆目前最小的兩組，最後 A 最常出現，碼最短。",
     whenToUse: [
       "靜態頻率已知的無失真壓縮",
       "證明貪婪選擇性質的經典例子",
@@ -328,7 +328,7 @@ KMP-SEARCH(T, P)
       ],
       result: "一種可能：A=0, E=10, B=110, C=1110, D=1111",
     },
-    visualizer: "none",
+    visualizer: "table",
     pseudocode: `HUFFMAN(C)
   n ← |C|
   Q ← C            // min-priority queue，key=頻率

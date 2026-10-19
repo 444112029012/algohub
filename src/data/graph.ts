@@ -126,7 +126,7 @@ def bfs(graph: dict[str, list[str]], start: str) -> dict[str, int]:
         explanation: "掃過所有點與邊各常數次。",
       },
     ],
-    related: ["dfs", "dijkstra", "topo-sort"],
+    related: ["queue", "dfs", "dijkstra"],
   },
   {
     slug: "dfs",
@@ -249,7 +249,7 @@ DFS-VISIT(u)
         explanation: "兩者都是 Θ(V+E)，差在探索策略。",
       },
     ],
-    related: ["bfs", "topo-sort", "scc"],
+    related: ["stack", "bfs", "scc"],
   },
   {
     slug: "dijkstra",
@@ -260,7 +260,7 @@ DFS-VISIT(u)
     tags: ["最短路徑", "貪婪", "非負權"],
     summary:
       "從來源反覆取出「目前距離最小且尚未確定」的點，並鬆弛它的出邊。邊權必須 ≥ 0。這是單源最短路的考試主力。",
-    idea: "貪婪：非負權下，當一個點第一次從 priority queue 成為最小值被取出，它的距離不會再被改小。證明靠切邊：任何更短路徑都得經過已確定集合，不會更優。",
+    idea: "從 A 出發，A→B 的邊權是 1、A→D 是 2。A 的距離先記 0，其他點是 ∞。因為每條邊都不是負的，目前距離最小的點再也不會被別的路改得更小：取出 A 之後，B 變成 1、D 變成 2，這兩個數之後還會再跟新的走法比，但已經取出的 A 不會再改。有負邊時「取出就定案」會錯，要改 Bellman-Ford。",
     whenToUse: [
       "單源、邊權非負",
       "路網、路由（權重為延遲 / 距離）",

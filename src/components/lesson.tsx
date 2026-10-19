@@ -8,6 +8,43 @@ import { Separator } from "@/components/ui/separator";
 import { getAlgorithm, type Algorithm } from "@/data";
 import { CATEGORIES } from "@/data/types";
 
+function demoLead(algorithm: Algorithm) {
+  if (algorithm.slug === "bellman-ford") {
+    return "點下方的數字是目前距離。先看「每一輪掃全部邊」：負邊存在時，挑中一個點也不能定案。再切到「只處理有變短的點」，那是同一張圖的佇列版本。建議按下一步。";
+  }
+  if (algorithm.slug === "dijkstra") {
+    return "點下方的數字是目前距離。紅點是這一步定案的點：因為沒有負邊，它不會再變短。金黃是改過、但還沒被挑中。";
+  }
+  if (algorithm.slug === "heap" || algorithm.slug === "heap-sort") {
+    return "上面是同一份數字畫成的樹，下面是陣列。父節點要大於或等於孩子。先看樹誰和誰交換，再對下面的下標。";
+  }
+  if (algorithm.slug === "bst") {
+    return "比現在這個點小就往左，大就往右。還沒放入的點先不畫。這不是堆積：堆積的左右沒有大小順序。";
+  }
+  if (algorithm.slug === "stack") {
+    return "右邊是頂端。最後放進去的，下一次最先被拿走。";
+  }
+  if (algorithm.slug === "queue") {
+    return "左邊是頭。先排進來的先離開，新的人排到右邊。";
+  }
+  if (algorithm.visualizer === "table") {
+    return "金框是正在寫的那一格，淡藍是這一步去看的舊格子。先讀底下的旁白，再對表。建議按「下一步」，不要先按播放。";
+  }
+  if (algorithm.visualizer === "graph") {
+    return "先看圖例，再按「下一步」。底下那句旁白在講這一動為什麼發生。";
+  }
+  if (algorithm.visualizer === "array") {
+    return "色塊是正在比較、當樞紐、或已經定位的位置。先看底下旁白，再對上面的數字。建議按「下一步」。";
+  }
+  if (algorithm.visualizer === "sets") {
+    return "圓點是元素：金＝這步新蓋到，綠＝已經蓋過。每個集合旁邊的「新蓋」是這步還能多蓋幾個。";
+  }
+  if (algorithm.visualizer === "intervals") {
+    return "紅＝正在考慮這段時間，綠＝已選，灰＝跟已選重疊所以丟掉。";
+  }
+  return "用同一組小例子把演算法跑一遍。";
+}
+
 const toc = [
   { id: "intro", label: "介紹" },
   { id: "complexity", label: "複雜度" },
@@ -85,19 +122,7 @@ export function Lesson({ algorithm }: { algorithm: Algorithm }) {
         {algorithm.visualizer !== "none" && (
           <section id="demo" className="scroll-mt-20 space-y-3">
             <h2 className="font-heading text-2xl">逐步示意</h2>
-            <p className="text-sm leading-6 text-muted-foreground">
-              {algorithm.visualizer === "table"
-                ? "這是填表過程，不是「格子自己在跳」。金框是正在寫的那一格，淡藍是這一步去抄的舊格子。先讀底下的旁白，再對表。建議按「下一步」，不要先按播放。"
-                : algorithm.visualizer === "graph"
-                  ? "紅點是現在走到的點。顏色圖例依演算法而變，先對一下再按「下一步」。底下那句旁白在講「這一動在做什麼」。"
-                  : algorithm.visualizer === "array"
-                    ? "色塊是正在比較、當樞紐、或已經定位的位置。先看底下旁白，再對上面的數字。建議按「下一步」。"
-                    : algorithm.visualizer === "sets"
-                      ? "圓點是元素：金＝這步新蓋到，綠＝已經蓋過。每個集合旁邊的「新蓋」是這步還能多蓋幾個。"
-                      : algorithm.visualizer === "intervals"
-                        ? "紅＝正在考慮這段時間，綠＝已選，灰＝跟已選重疊所以丟掉。"
-                        : "用同一組小例子把演算法跑一遍。"}
-            </p>
+            <p className="text-sm leading-6 text-muted-foreground">{demoLead(algorithm)}</p>
             <Card className="paper-card">
               <CardContent className="pt-4">
                 <AlgorithmVisualizer slug={algorithm.slug} />

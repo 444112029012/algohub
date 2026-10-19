@@ -1,4 +1,14 @@
 import {
+  bstTrace,
+  hashTrace,
+  huffmanTrace,
+  kmpTrace,
+  queueTrace,
+  stackTrace,
+  unionFindTrace,
+  BST_LAYOUT,
+} from "./traces-ds";
+import {
   SCC_GRAPH,
   binarySearchAnswerTrace,
   bubbleSortTrace,
@@ -42,6 +52,8 @@ export type GraphFrame = {
   structure: string[];
   dist?: Record<string, number | string>;
   edgeLabels?: Record<string, string>;
+  /** 只畫這些點（插入樹時還沒出現的點先藏起來）。 */
+  shown?: string[];
 };
 
 export type TableHighlight = {
@@ -556,6 +568,29 @@ export function dfsTrace(start = "A"): GraphFrame[] {
   return frames;
 }
 
+function showDist(v: number) {
+  return Number.isFinite(v) ? String(v) : "∞";
+}
+
+/** 舊距離、這條邊、走過來會變成多少、為什麼改或不改。 */
+function relaxSentence(u: string, v: string, w: number, du: number, dv: number) {
+  if (!Number.isFinite(du)) {
+    return {
+      better: false,
+      text: `看 ${u}→${v}，權重 ${w}。\n${u} 還沒走到（距離 ∞），這條邊現在不能用。${v} 維持 ${showDist(dv)}。`,
+    };
+  }
+  const cand = du + w;
+  const better = cand < dv;
+  const head = `看 ${u}→${v}，權重 ${w}。\n${v} 現在是 ${showDist(dv)}。從 ${u}（距離 ${du}）走過來是 ${du}+${w}=${cand}。`;
+  return {
+    better,
+    text: better
+      ? `${head}\n比原來小，所以改成 ${cand}。`
+      : `${head}\n沒有比 ${showDist(dv)} 更短，所以不改。`,
+  };
+}
+
 export function dijkstraTrace(start = "A"): GraphFrame[] {
   const g = adjList();
   const frames: GraphFrame[] = [];
@@ -574,7 +609,7 @@ export function dijkstraTrace(start = "A"): GraphFrame[] {
   frames.push({
     nodeStates: { ...nodeStates },
     edgeStates: { ...edgeStates },
-    message: `Dijkstra 從 ${start} 出發。邊權必須非負。`,
+    message: `從 ${start} 出發。點下方的數字是「目前知道的最短距離」，∞ 代表還沒走到。\n每次挑還沒定案、而且這個數字最小的點。因為每條邊都不是負的，挑中之後它不會再變短。`,
     structureLabel: "距離",
     structure: Object.entries(fmt()).map(([k, v]) => `${k}:${v}`),
     dist: fmt(),
@@ -594,7 +629,7 @@ export function dijkstraTrace(start = "A"): GraphFrame[] {
     frames.push({
       nodeStates: { ...nodeStates },
       edgeStates: { ...edgeStates },
-      message: `選尚未確定且距離最小的點 ${u}（d=${dist[u]}），此距離已是最短。`,
+      message: `取出還沒定案、距離最小的 ${u}（現在是 ${dist[u]}）。\n沒有負邊，所以別的路不可能再把 ${u} 改得更小。${dist[u]} 從這一刻定案。`,
       structureLabel: "距離",
       structure: Object.entries(fmt()).map(([k, v]) => `${k}:${v}`),
       dist: fmt(),
@@ -602,32 +637,22 @@ export function dijkstraTrace(start = "A"): GraphFrame[] {
     for (const { to, w } of g[u]) {
       if (done.has(to)) continue;
       const k = edgeKey(u, to);
-      edgeStates[k] = "active";
+      const told = relaxSentence(u, to, w, dist[u], dist[to]);
+      if (told.better) {
+        dist[to] = dist[u] + w;
+        edgeStates[k] = "relaxed";
+        if (!done.has(to)) nodeStates[to] = "queued";
+      } else {
+        edgeStates[k] = "rejected";
+      }
       frames.push({
         nodeStates: { ...nodeStates },
         edgeStates: { ...edgeStates },
-        message: `鬆弛 ${u}→${to}，權重 ${w}：目前 d[${to}]=${
-          dist[to] === Infinity ? "∞" : dist[to]
-        }，候選 ${dist[u] + w}`,
+        message: told.text,
         structureLabel: "距離",
         structure: Object.entries(fmt()).map(([k, v]) => `${k}:${v}`),
         dist: fmt(),
       });
-      if (dist[u] + w < dist[to]) {
-        dist[to] = dist[u] + w;
-        edgeStates[k] = "relaxed";
-        nodeStates[to] = "queued";
-        frames.push({
-          nodeStates: { ...nodeStates },
-          edgeStates: { ...edgeStates },
-          message: `更新 d[${to}] = ${dist[to]}`,
-          structureLabel: "距離",
-          structure: Object.entries(fmt()).map(([k, v]) => `${k}:${v}`),
-          dist: fmt(),
-        });
-      } else {
-        edgeStates[k] = "rejected";
-      }
     }
     done.add(u);
     nodeStates[u] = "visited";
@@ -637,7 +662,7 @@ export function dijkstraTrace(start = "A"): GraphFrame[] {
       DEMO_GRAPH.nodes.map((n) => [n.id, "done" as const])
     ),
     edgeStates: { ...edgeStates },
-    message: "所有點的最短距離確定。有負權應改用 Bellman-Ford。",
+    message: "每個點下方的數字都定案了。若圖上有負的邊，這個「挑中就定案」會錯，要改用 Bellman-Ford。",
     structureLabel: "距離",
     structure: Object.entries(fmt()).map(([k, v]) => `${k}:${v}`),
     dist: fmt(),
@@ -1058,6 +1083,8 @@ export function getGraphTrace(slug: string): GraphFrame[] {
       return maxFlowTrace();
     case "scc":
       return sccTrace();
+    case "bst":
+      return bstTrace();
     default:
       return [];
   }
@@ -1083,6 +1110,18 @@ export function getTableTrace(slug: string): TableFrame[] {
       return unboundedKnapsackTrace();
     case "fractional-knapsack":
       return fractionalKnapsackTrace();
+    case "stack":
+      return stackTrace();
+    case "queue":
+      return queueTrace();
+    case "hash":
+      return hashTrace();
+    case "union-find":
+      return unionFindTrace();
+    case "kmp":
+      return kmpTrace();
+    case "huffman":
+      return huffmanTrace();
     default:
       return [];
   }
@@ -1271,6 +1310,7 @@ export function graphLayout(slug: string): {
       edges: SCC_GRAPH.edges.map(([u, v]) => ({ u, v, directed: true })),
     };
   }
+  if (slug === "bst") return BST_LAYOUT;
   return {
     nodes: DEMO_GRAPH.nodes,
     edges: DEMO_GRAPH.undirected.map(([u, v, w]) => ({
@@ -1366,53 +1406,120 @@ export function bellmanFordTrace(): GraphFrame[] {
   frames.push({
     nodeStates: { ...nodeStates },
     edgeStates: { ...edgeStates },
-    message: "Bellman-Ford：對所有邊做 |V|-1 輪鬆弛。邊權可為負。",
+    message:
+      "從 S 出發。點下方是目前距離。\n這張圖有負邊 A→B = -3，所以不能像 Dijkstra 一樣挑到一個點就定案。做法是把每一條邊都試過，連做 |V|-1 輪。",
     structureLabel: "距離",
     structure: Object.entries(fmt()).map(([k, v]) => `${k}:${v}`),
     dist: fmt(),
   });
   for (let round = 1; round <= nodes.length - 1; round++) {
     let changed = false;
+    frames.push({
+      nodeStates: { ...nodeStates },
+      edgeStates: { ...edgeStates },
+      message: `第 ${round} 輪開始。這一輪把每條邊都看一次；改短了的點下一輪還可能再傳出去。`,
+      structureLabel: "距離",
+      structure: Object.entries(fmt()).map(([k, v]) => `${k}:${v}`),
+      dist: fmt(),
+    });
     for (const [u, v, w] of edges) {
       const k = `${u}>${v}`;
-      edgeStates[k] = "active";
-      frames.push({
-        nodeStates: { ...nodeStates },
-        edgeStates: { ...edgeStates },
-        message: `第 ${round} 輪鬆弛 ${u}→${v}（${w}）：d[${v}] 現 ${
-          dist[v] === Infinity ? "∞" : dist[v]
-        }，候選 ${dist[u] === Infinity ? "∞" : dist[u] + w}`,
-        structureLabel: "距離",
-        structure: Object.entries(fmt()).map(([k, v]) => `${k}:${v}`),
-        dist: fmt(),
-      });
-      if (dist[u] + w < dist[v]) {
+      const told = relaxSentence(u, v, w, dist[u], dist[v]);
+      if (told.better) {
         dist[v] = dist[u] + w;
         changed = true;
         edgeStates[k] = "relaxed";
         nodeStates[v] = "queued";
-        frames.push({
-          nodeStates: { ...nodeStates },
-          edgeStates: { ...edgeStates },
-          message: `更新 d[${v}] = ${dist[v]}`,
-          structureLabel: "距離",
-          structure: Object.entries(fmt()).map(([k, v]) => `${k}:${v}`),
-          dist: fmt(),
-        });
       } else {
         edgeStates[k] = "rejected";
       }
+      frames.push({
+        nodeStates: { ...nodeStates },
+        edgeStates: { ...edgeStates },
+        message: `第 ${round} 輪。${told.text}`,
+        structureLabel: "距離",
+        structure: Object.entries(fmt()).map(([k, v]) => `${k}:${v}`),
+        dist: fmt(),
+      });
     }
     if (!changed) break;
   }
   frames.push({
     nodeStates: Object.fromEntries(nodes.map((id) => [id, "done" as const])),
     edgeStates: { ...edgeStates },
-    message: "再做一輪若還能更新，就有負環。本圖沒有。",
+    message:
+      "再多做一輪如果還能變短，就有負環，最短路沒有下界。這張圖再走也不會更短。\n同一張圖也可以只把「距離有變短」的點放進佇列，切換上方按鈕看那一種。",
     structureLabel: "距離",
     structure: Object.entries(fmt()).map(([k, v]) => `${k}:${v}`),
     dist: fmt(),
   });
+  return frames;
+}
+
+export function spfaTrace(): GraphFrame[] {
+  const nodes = BF_GRAPH.nodes.map((n) => n.id);
+  const edges = BF_GRAPH.edges;
+  const g: Record<string, { to: string; w: number }[]> = {};
+  for (const id of nodes) g[id] = [];
+  for (const [u, v, w] of edges) g[u].push({ to: v, w });
+  const dist: Record<string, number> = {};
+  const nodeStates: Record<string, GraphNodeState> = {};
+  for (const id of nodes) {
+    dist[id] = Infinity;
+    nodeStates[id] = "idle";
+  }
+  dist.S = 0;
+  const queue = ["S"];
+  const inQ = new Set(["S"]);
+  nodeStates.S = "queued";
+  const frames: GraphFrame[] = [];
+  const edgeStates: Record<string, GraphEdgeState> = {};
+  const fmt = () =>
+    Object.fromEntries(
+      Object.entries(dist).map(([k, v]) => [k, v === Infinity ? "∞" : v])
+    );
+  const snap = (message: string) => {
+    frames.push({
+      nodeStates: { ...nodeStates },
+      edgeStates: { ...edgeStates },
+      message,
+      structureLabel: "佇列（左是下一個要處理的）",
+      structure: [...queue],
+      dist: fmt(),
+    });
+  };
+  snap(
+    "還是從 S 出發，但不再每輪把所有邊掃過。\n只有距離剛變短的點才放進佇列。S 先進去。同一個點如果已經在佇列裡，不要再排一次。"
+  );
+  while (queue.length) {
+    const u = queue.shift()!;
+    inQ.delete(u);
+    nodeStates[u] = "current";
+    snap(
+      `取出 ${u}（距離 ${showDist(dist[u])}）。\n只看從 ${u} 走出去的邊。處理完就離開佇列；若等一下又被改短，可以再進來。`
+    );
+    for (const { to, w } of g[u]) {
+      const k = `${u}>${to}`;
+      const told = relaxSentence(u, to, w, dist[u], dist[to]);
+      if (told.better) {
+        dist[to] = dist[u] + w;
+        edgeStates[k] = "relaxed";
+        nodeStates[to] = "queued";
+        if (inQ.has(to)) {
+          snap(`${told.text}\n${to} 已經在佇列裡，不重複排，但距離已經改了。`);
+        } else {
+          queue.push(to);
+          inQ.add(to);
+          snap(`${told.text}\n${to} 不在佇列裡，排到後面。`);
+        }
+      } else {
+        edgeStates[k] = "rejected";
+        snap(told.text);
+      }
+    }
+    if (!inQ.has(u)) nodeStates[u] = "idle";
+  }
+  snap("佇列空了。這張圖的答案和每一輪全掃相同：S:0、A:4、B:1、C:3。\n最壞情況仍是 Θ(VE)，考試手算以全掃為準；佇列只是少做沒變短的邊。");
   return frames;
 }
 
