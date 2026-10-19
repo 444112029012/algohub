@@ -45,7 +45,7 @@ function demoLead(algorithm: Algorithm) {
     return "先看圖例，再按「下一步」。底下那句旁白在講這一動為什麼發生。";
   }
   if (algorithm.visualizer === "array") {
-    return "色塊是正在比較、當樞紐、或已經定位的位置。先看底下旁白，再對上面的數字。建議按「下一步」。";
+    return "色塊是正在比較、當 Pivot、或已經定位的位置。先看底下旁白，再對上面的數字。建議按「下一步」。";
   }
   if (algorithm.visualizer === "sets") {
     return "圓點是元素：金＝這步新蓋到，綠＝已經蓋過。每個集合旁邊的「新蓋」是這步還能多蓋幾個。";

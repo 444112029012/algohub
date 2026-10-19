@@ -107,7 +107,7 @@ export const sortingCheat = [
     inPlace: false,
   },
   {
-    name: "基數排序 LSD",
+    name: "基數排序（低位先）",
     best: "Θ(d(n+r))",
     avg: "Θ(d(n+r))",
     worst: "Θ(d(n+r))",

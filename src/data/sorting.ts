@@ -184,24 +184,24 @@ function merge(left: number[], right: number[]): number[] {
     examWeight: "極高",
     tags: ["分治", "原地", "期望 O(n log n)"],
     summary:
-      "選一個樞紐，把較小的丟左邊、較大的丟右邊，再對兩側遞迴。實務上常數很小，但最壞會退化成 Θ(n²)，是選擇題最愛挖的陷阱。",
-    idea: "分割（partition）是核心：樞紐會被放到「最終位置」。之後左邊全 ≤ pivot、右邊全 ≥ pivot，不必再跨側比較。平均遞迴樹平衡，深度 O(log n)；若每次都切成 1 與 n-1（已排序 + 固定取最右），就變成選擇排序等級的 n²。",
+      "選一個 Pivot（拿來比較的基準值），把較小的放左邊、較大的放右邊，再對兩側遞迴。實務上常數很小，但最壞會退化成 Θ(n²)，是選擇題常考的陷阱。",
+    idea: "分割是核心：Pivot 會被放到最終位置，之後左邊都 ≤ Pivot、右邊都 ≥ Pivot。下面的手算用 Lomuto 分割：Pivot 取區間最右，從左把不大於它的元素換過來，最後再把 Pivot 換到分界上。Hoare 分割是另一種寫法，左右同時往中間找，結束時 Pivot 不一定在最終位置。平均遞迴樹平衡，深度 O(log n)；若每次都切成 1 與 n−1（已排序而且固定取最右），就退化成 Θ(n²)。",
     whenToUse: [
       "記憶體內排序、不要求穩定",
       "平均效能優先（標準庫常混 introsort）",
       "需要原地、額外空間只要遞迴堆疊",
     ],
     examTips: [
-      "最壞 Θ(n²)：已排序或全部相等 + 固定端點當 pivot。",
-      "改善：隨機 pivot、三數取中、小區間改插入排序、Introsort（退化改 heap）。",
-      "期望時間 Θ(n log n)，隨機化後高機率接近平衡。",
-      "不是穩定排序。額外空間：Lomuto/Hoare 為 O(log n) 平均堆疊，最壞 O(n)。",
+      "最壞 Θ(n²)：已排序或全部相等，而且固定拿端點當 Pivot。",
+      "改善：隨機選 Pivot、三數取中、小區間改插入排序。Introsort 是深度過深就改用堆積排序。",
+      "期望時間 Θ(n log n)，隨機選 Pivot 之後高機率接近平衡。",
+      "不是穩定排序。額外空間是遞迴堆疊：平均 Θ(log n)，最壞 Θ(n)。Lomuto 與 Hoare 只差分割怎麼寫，空間階相同。",
       "Quick Select 找第 k 小是同一個 partition，平均 Θ(n)。",
     ],
     pitfalls: [
       "把平均複雜度講成最壞複雜度。",
       "以為「一定比 Merge Sort 快」——最壞與穩定性都可能讓它輸。",
-      "Hoare 與 Lomuto 的索引細節搞混，容易無限遞迴。",
+      "把 Hoare 的回傳索引當成 Pivot 的最終位置。Hoare 結束時那個索引不一定放著 Pivot，邊界寫錯會無限遞迴。",
     ],
     complexity: {
       timeBest: "Θ(n log n)",
@@ -212,25 +212,25 @@ function merge(left: number[], right: number[]): number[] {
       inPlace: true,
     },
     complexityNote:
-      "最好是每次都對半切；最壞是每次只淘汰樞紐自己。隨機 pivot 把最壞變成極低機率事件。",
+      "最好是每次都對半切；最壞是每次只淘汰 Pivot 自己。隨機選 Pivot 時，最壞變成極低機率。",
     workedExample: {
       title: "Lomuto 分割 [38, 27, 43, 3, 9, 82, 10]",
-      input: "pivot = 10（最右）",
+      input: "Lomuto：區間最右的 10 當 Pivot，從左把 ≤10 的元素換到左邊，最後把 10 換到分界",
       steps: [
         {
           title: "掃描並交換",
           detail:
-            "i 指向「下一個 ≤ pivot 應放置的位置」。27、3、9 都 ≤ 10，依序換到左邊；38、43、82 留在右側。",
+            "i 指向下一個 ≤ Pivot 應放置的位置。27、3、9 都 ≤ 10，依序換到左邊；38、43、82 留在右側。",
         },
         {
-          title: "樞紐就位",
+          title: "Pivot 就位",
           detail:
-            "最後把 pivot 與 i 交換，得到 [9, 27, 3, 10, 43, 82, 38]，10 已在最終位置（索引 3）。",
+            "最後把 Pivot 與 i 交換，得到 [9, 27, 3, 10, 43, 82, 38]，10 已在最終位置（索引 3）。",
         },
         {
           title: "遞迴兩側",
           detail:
-            "左 [9,27,3] 再以 3 為樞紐…；右 [43,82,38] 以 38 為樞紐。直到區間長度 ≤ 1。",
+            "左 [9,27,3] 再以 3 為 Pivot；右 [43,82,38] 以 38 為 Pivot。直到區間長度 ≤ 1。",
         },
       ],
       result: "[3, 9, 10, 27, 38, 43, 82]",
@@ -238,11 +238,11 @@ function merge(left: number[], right: number[]): number[] {
     visualizer: "array",
     pseudocode: `QUICKSORT(A, lo, hi)
   if lo < hi
-    p ← PARTITION(A, lo, hi)   // pivot 的最終下標
+    p ← PARTITION(A, lo, hi)   // Pivot 的最終下標
     QUICKSORT(A, lo, p - 1)
     QUICKSORT(A, p + 1, hi)
 
-PARTITION(A, lo, hi)            // Lomuto
+PARTITION(A, lo, hi)            // Lomuto：最右當 Pivot
   pivot ← A[hi]
   i ← lo
   for j ← lo to hi - 1
@@ -305,7 +305,7 @@ function quickSort(a: number[], lo = 0, hi = a.length - 1) {
     quiz: [
       {
         id: "qs1",
-        prompt: "對已排序陣列使用「永遠取最右當 pivot」的 Quick Sort，最壞複雜度？",
+        prompt: "對已排序陣列使用「永遠取最右當 Pivot」的快速排序，最壞複雜度？",
         options: ["Θ(n)", "Θ(n log n)", "Θ(n²)", "Θ(n log log n)"],
         answer: 2,
         explanation: "每次分割都得到 (n-1)+0，遞迴深度 n，總比較約 n²/2。",
@@ -326,9 +326,9 @@ function quickSort(a: number[], lo = 0, hi = a.length - 1) {
         id: "qs3",
         prompt: "下列哪項不能改善 Quick Sort 最壞情況？",
         options: [
-          "隨機選擇 pivot",
+          "隨機選擇 Pivot",
           "三數取中",
-          "改成永遠取第一個元素當 pivot",
+          "改成永遠取第一個元素當 Pivot",
           "Introsort：深度過深改 Heap Sort",
         ],
         answer: 2,

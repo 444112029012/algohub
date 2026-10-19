@@ -215,7 +215,7 @@ export function radixSortTrace(
   frames.push({
     array: [...a],
     highlights: [],
-    message: `LSD 基數排序：先排個位、再十位。每一輪必須用穩定的計數排序。`,
+    message: `低位先（LSD）：先排個位、再十位。每一輪必須用穩定的計數排序，低位的次序才不會被打亂。`,
   });
   const max = Math.max(...a);
   for (let exp = 1; Math.floor(max / exp) > 0; exp *= 10) {
@@ -257,7 +257,7 @@ export function quickselectTrace(
   frames.push({
     array: [...a],
     highlights: [],
-    message: `Quickselect 找第 ${k + 1} 小（0-based 索引 k=${k}）。只遞迴樞紐的那一側。`,
+    message: `Quickselect 找第 ${k + 1} 小（索引從 0 起算，k=${k}）。Lomuto 分割後只繼續 k 所在的那一側。`,
   });
 
   function partition(lo: number, hi: number) {
@@ -268,7 +268,7 @@ export function quickselectTrace(
         ...rangeHi(lo, hi, "range"),
         { index: hi, kind: "pivot" },
       ],
-      message: `區間 [${lo}..${hi}]，樞紐 ${pivot}`,
+      message: `區間 [${lo}..${hi}]，Pivot = ${pivot}（最右）`,
       lo,
       hi,
     });
@@ -283,7 +283,7 @@ export function quickselectTrace(
     frames.push({
       array: [...a],
       highlights: [{ index: i, kind: "pivot" }],
-      message: `樞紐 ${a[i]} 就位索引 ${i}。目標 k=${k}。`,
+      message: `Pivot ${a[i]} 就位，索引 ${i}。目標是索引 ${k}。`,
       lo,
       hi,
     });
@@ -400,7 +400,7 @@ export function heapDsTrace(): ArrayFrame[] {
     frames.push({
       array: [...a],
       highlights: [{ index: a.length - 1, kind: "write" }],
-      message: `插入 ${x} 到陣列尾端（完全二元樹下一個空位；0-based 左孩 2i+1）。`,
+      message: `插入 ${x} 到陣列尾端（完全二元樹的下一個空位。索引從 0 起算時，左孩是 2i+1）。`,
     });
     swim(a.length - 1);
   }

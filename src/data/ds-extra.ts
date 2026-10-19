@@ -10,7 +10,7 @@ export const dsExtraLessons: Algorithm[] = [
     tags: ["完全二元樹", "優先佇列", "O(log n)"],
     summary:
       "用陣列存完全二元樹，父節點 ≥（或 ≤）孩子。取最值 O(1)，插入／刪最值 O(log n)，一次建堆 Θ(n)。這是 Dijkstra、Huffman、Heap Sort 的零件，要和「堆積排序」分開記。",
-    idea: "動畫上面是樹、下面是同一份陣列。0-based：左孩 2i+1、右孩 2i+2、父 ⌊(i-1)/2⌋。插入放在尾端再上浮；刪最值把尾端搬到根再下沉。Build-Heap 從最後非葉往根 heapify，總成本 Θ(n)，不是 n 次插入的 Θ(n log n)。左右孩子沒有誰一定比較小，所以這不是二元搜尋樹。",
+    idea: "動畫上面是樹、下面是同一份陣列。索引從 0 起算：左孩 2i+1、右孩 2i+2、父 ⌊(i−1)/2⌋。插入放在尾端再上浮；刪掉最大值時把尾端搬到根再下沉。建堆從最後一個非葉節點往根調整，總成本 Θ(n)，不是 n 次插入的 Θ(n log n)。左右孩子沒有誰一定比較小，所以這不是二元搜尋樹。",
     whenToUse: [
       "重複取最小／最大：排程、Huffman、Dijkstra、Prim",
       "需要 k 個最大：大小 k 的 heap",
@@ -23,7 +23,7 @@ export const dsExtraLessons: Algorithm[] = [
       "decrease-key：binary heap O(log n)（要有 handle）；Fibonacci heap 均攤 O(1)，Dijkstra 考口頭。",
     ],
     pitfalls: [
-      "0-based 寫成 2i、2i+1。",
+      "索引從 0 起算卻寫成左孩 2i、右孩 2i+1（那是從 1 起算的公式）。",
       "以為建堆是 O(n log n)。",
       "把 Heap 和 BST 搞混：heap 不支援任意鍵搜尋。",
     ],
@@ -41,7 +41,7 @@ export const dsExtraLessons: Algorithm[] = [
         { title: "插 38、27", detail: "27 當左孩，27<38，不必上浮。[38,27]" },
         { title: "插 43", detail: "43 當右孩 >38，與根交換。[43,27,38]" },
         { title: "插 82", detail: "82 先當 27 的左孩，上浮過 27、再過 43。[82,43,38,27]" },
-        { title: "extract-max", detail: "82 與 27 換再縮小，27 下沉與 43 換。[43,27,38]" },
+        { title: "取出最大值", detail: "根 82 與尾端 27 交換後刪掉 82。27 下沉，與較大的孩子 43 交換。[43,27,38]" },
       ],
       result: "取出 82，堆剩 [43, 27, 38]",
     },
@@ -153,7 +153,7 @@ BUILD-MAX-HEAP(A)
     quiz: [
       {
         id: "hp1",
-        prompt: "0-based 陣列，索引 i 的左孩？",
+        prompt: "索引從 0 起算時，索引 i 的左孩是？",
         options: ["2i", "2i+1", "2i+2", "⌊i/2⌋"],
         answer: 1,
         explanation: "左 2i+1、右 2i+2。1-based 才是 2i。",

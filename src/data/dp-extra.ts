@@ -322,7 +322,7 @@ def lis_nlogn(a: list[int]) -> int:
       },
       {
         id: "mc2",
-        prompt: "Catalan 數在這題代表？",
+        prompt: "卡特蘭數在矩陣鏈乘代表什麼？",
         options: ["最少乘法次數", "括號化方案數", "矩陣個數", "近似比"],
         answer: 1,
         explanation: "方案數不是成本。",

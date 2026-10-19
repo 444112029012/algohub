@@ -633,7 +633,7 @@ int kruskal(int n, vector<array<int,3>> e) {
     tags: ["DAG", "Kahn", "DFS"],
     summary:
       "把有向無環圖的點排成一線，使每條邊都從左指向右。課表先修、編譯依賴、DP on DAG 都靠它。",
-    idea: "兩種標準作法：(1) Kahn：不斷取入度 0 的點；(2) DFS：依完成時間反序。若無法排出全部點，圖中有環。",
+    idea: "兩種標準作法。(1) Kahn：入度是指進來的箭頭數，不斷取出入度為 0 的點，並把它指出去的邊刪掉。(2) 深度優先搜尋：依完成時間從晚到早輸出。若無法排出全部點，圖中有環。",
     whenToUse: [
       "先修關係、工作排程",
       "在 DAG 上做最短 / 最長路（依拓樸序鬆弛，O(V+E)）",
@@ -653,7 +653,7 @@ int kruskal(int n, vector<array<int,3>> e) {
     },
     complexityNote: "每個點出隊一次，每條邊扣一次入度。",
     workedExample: {
-      title: "Kahn 手算",
+      title: "Kahn：入度為 0 的點先取出",
       input: "1→2→4→6，1→3→4，3→5→6",
       steps: [
         { title: "入度", detail: "1:0, 2:1, 3:1, 4:2, 5:1, 6:2。佇列先放 1。" },
