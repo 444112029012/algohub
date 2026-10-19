@@ -10,7 +10,7 @@ export const graphSccLessons: Algorithm[] = [
     tags: ["有向圖", "Kosaraju", "Tarjan"],
     summary:
       "有向圖裡，一群點如果沿著箭頭彼此都走得到對方，就是一個強連通分量。Kosaraju 做兩次 DFS（第二次走反向圖），Tarjan 做一次 DFS 加一個 low 值。時間都是 Θ(V+E)。每個分量縮成一個點之後，圖一定沒有環。",
-    idea: "先用 DFS 記下每個點「走完離開」的時間。越晚離開的點，越可能在源頭那一側。把所有箭頭反過來，從最晚離開的點再 DFS，一次走完的就是同一個分量。Tarjan 則是邊走邊記：如果還能走回自己，就還在同一個分量裡。",
+    idea: "Kosaraju 先用 DFS 記下每個點走完離開的時間。越晚離開的點，越可能在源頭那一側。把所有箭頭反過來，從最晚離開的點再 DFS，一次走完的就是同一個分量。Tarjan 只走一次：dfn[u] 是走進 u 的時間戳，low[u] 是從 u 的子樹、再走至多一條還在堆疊上的回邊，能碰到的最小 dfn。low[u] 等於 dfn[u] 時，u 走不回更早的祖先，u 就是這個分量的根，把堆疊彈到 u 為止。",
     whenToUse: [
       "2-SAT、有向圖連通性、死鎖／依賴收縮",
       "先縮 SCC 再 DP／拓樸",
@@ -36,11 +36,11 @@ export const graphSccLessons: Algorithm[] = [
       title: "A→B→C→A，A→D，D↔E，E→F",
       input: "六點有向圖",
       steps: [
-        { title: "第一輪 DFS", detail: "從 A 走進 A-B-C 環再走到 D-E-F。完成序約 C,B,F,E,D,A。" },
-        { title: "反向圖", detail: "邊全部翻轉。" },
-        { title: "倒序 DFS", detail: "從 A 開始得到 {A,B,C}，再 {D,E}，最後 {F}。" },
-        { title: "Tarjan 的 dfn／low", detail: "鄰居依字母序。A、B、C 的 dfn 是 1、2、3。C→A 是回邊，low[C]=min(3, dfn[A]=1)=1。樹邊把 low 往上傳，low[B]=low[A]=1。" },
-        { title: "彈出分量", detail: "F 的 dfn=low=6，先彈出 {F}。E→D 是回邊，low[E]=dfn[D]=4，不等於 dfn[E]=5。D 的 low 等於 dfn，彈出 {D,E}。最後 A 的 low 等於 dfn，彈出 {A,B,C}。" },
+        { title: "Kosaraju：第一輪 DFS", detail: "從 A 走進 A-B-C 環再走到 D-E-F。完成序約 C, B, F, E, D, A。" },
+        { title: "Kosaraju：反向圖", detail: "邊全部翻轉，再從完成序最晚的點開始 DFS。" },
+        { title: "Kosaraju：倒序 DFS", detail: "從 A 得到 {A,B,C}，再得到 {D,E}，最後 {F}。" },
+        { title: "Tarjan：dfn 與 low", detail: "鄰居依字母序。A、B、C 的 dfn 是 1、2、3。C→A 是回邊，low[C]=min(3, dfn[A]=1)=1。樹邊把孩子的 low 往上傳，所以 low[B]=low[A]=1。" },
+        { title: "Tarjan：low 等於 dfn 就彈出", detail: "F 的 dfn=low=6，先彈出 {F}。E→D 是回邊，low[E]=dfn[D]=4，不等於 dfn[E]=5。D 的 low 等於 dfn，彈出 {D,E}。最後 A 的 low 等於 dfn，彈出 {A,B,C}。" },
       ],
       result: "三個 SCC：{A,B,C}、{D,E}、{F}。縮點後是 A-B-C → D-E → F。",
     },

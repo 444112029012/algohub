@@ -1,12 +1,12 @@
 export const studyPath = [
+  { title: "分治排序與二分搜尋", slugs: [["merge-sort", "合併排序"], ["quick-sort", "快速排序"], ["heap-sort", "堆積排序"], ["binary-search", "二分搜尋"]] },
+  { title: "分治與主定理", slugs: [["master-theorem", "主定理"]] },
   { title: "堆疊與佇列", slugs: [["stack", "堆疊"], ["queue", "佇列"]] },
   { title: "圖的遍歷", slugs: [["bfs", "廣度優先搜尋"], ["dfs", "深度優先搜尋"]] },
   { title: "最短路徑", slugs: [["dijkstra", "Dijkstra"], ["bellman-ford", "Bellman-Ford"], ["floyd-warshall", "Floyd–Warshall"]] },
   { title: "最小生成樹", slugs: [["kruskal", "Kruskal"], ["prim", "Prim"]] },
   { title: "動態規劃", slugs: [["knapsack", "0/1 背包"], ["lcs", "最長共同子序列"]] },
   { title: "貪婪演算法", slugs: [["activity-selection", "活動選擇"]] },
-  { title: "分治排序與二分搜尋", slugs: [["merge-sort", "合併排序"], ["quick-sort", "快速排序"], ["heap-sort", "堆積排序"], ["binary-search", "二分搜尋"]] },
-  { title: "分治與主定理", slugs: [["master-theorem", "主定理"]] },
   { title: "NP 完備化約", slugs: [["three-sat", "3-SAT"]] },
 ] as const;
 

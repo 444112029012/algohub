@@ -32,6 +32,7 @@ export const dsExtraLessons: Algorithm[] = [
       timeBest: "Θ(1)",
       timeAvg: "Θ(log n)",
       timeWorst: "Θ(n)",
+      badge: "插入 Θ(log n)，建堆 Θ(n)",
       space: "Θ(n)",
     },
     complexityNote: "高度 ⌊log₂ n⌋。合併兩個 heap：binary heap 要 Θ(n)，binomial／Fibonacci 較優，考試較少。",
