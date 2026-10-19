@@ -117,7 +117,7 @@ export const CATEGORIES: {
     id: "string",
     name: "字串",
     english: "String",
-    blurb: "KMP 的 LPS 表是手算題熱門。",
+    blurb: "KMP 的最長真前後綴表是手算題熱門。",
   },
   {
     id: "complexity",

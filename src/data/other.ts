@@ -165,8 +165,8 @@ UNION(x, y)
     },
     complexityNote: "i 只增不減，j 的增加與減少攤還線性。",
     workedExample: {
-      title: "P = ABABC 的 LPS",
-      input: "len=5",
+      title: "模式 ABABC 的最長真前後綴（LPS）",
+      input: "LPS[i] 是前 i+1 個字元裡，既是前綴也是後綴、而且不能等於整段的最長長度",
       steps: [
         { title: "索引 0", detail: "單字元沒有真前後綴，lps[0]=0。" },
         { title: "索引 1（AB）", detail: "A≠B，lps[1]=0。" },
@@ -446,7 +446,7 @@ function huffmanCodes(freq: Record<string, number>) {
     tags: ["貪婪", "近似演算法", "NP-hard", "集合覆蓋"],
     summary:
       "用最少個子集蓋住整個宇宙 U。精確版是 NP-hard；研究所常考的是「每次選覆蓋最多尚未覆蓋元素」的貪婪法，以及近似比 H(n)（調和數）。",
-    idea: "還沒蓋到的元素叫剩餘宇宙。每輪掃過所有還沒被選的集合，選「與剩餘宇宙交集最大」的那一個（平手依編號）。把新蓋到的元素從剩餘裡刪掉，直到蓋完。這個策略沒有最優子結構到能保證 OPT，但可以證明解的大小 ≤ H(s)·OPT，s 是最大集合的元素數，H(s)=1+1/2+…+1/s ≤ ln s + 1。",
+    idea: "還沒蓋到的元素叫剩餘宇宙。每輪掃過所有還沒被選的集合，選「與剩餘宇宙交集最大」的那一個（平手依編號）。把新蓋到的元素從剩餘裡刪掉，直到蓋完。這個策略不能保證是最佳解。可以證明選出的集合數 ≤ H(s)·最佳解，s 是最大集合的元素數，H(s)=1+1/2+…+1/s ≤ ln s + 1。",
     whenToUse: [
       "設施選址、感測器佈點、測驗題組覆蓋知識點",
       "需要可行解、允許近似，而不是指數時間的精確 DP",
@@ -475,7 +475,7 @@ function huffmanCodes(freq: Record<string, number>) {
     complexityNote:
       "m 個集合、宇宙 n 個元素。每輪掃描所有集合算新覆蓋，最多選 m 次。用堆積可再降，考試默認寫樸素即可。",
     workedExample: {
-      title: "貪婪 ≠ OPT 的標準小例子",
+      title: "貪婪不是最佳解的小例子",
       input: "U={1,2,3,4,5,6}，S1={1,2,3,4}，S2={1,2,5}，S3={3,4,6}",
       steps: [
         {
@@ -492,12 +492,12 @@ function huffmanCodes(freq: Record<string, number>) {
           detail: "S3 新蓋 {6}，選 S3。剩餘空集合，結束。",
         },
         {
-          title: "對照 OPT",
+          title: "對照最佳解",
           detail:
             "S2 ∪ S3 = {1,2,5,3,4,6} = U，兩個集合就夠。貪婪用了 3 個。比值 3/2 ≤ H(4)=1+1/2+1/3+1/4=2.083（S1 最大，s=4）。",
         },
       ],
-      result: "貪婪 {S1,S2,S3}，OPT={S2,S3}",
+      result: "貪婪選了 {S1,S2,S3}；最佳解是 {S2,S3}",
     },
     visualizer: "sets",
     pseudocode: `GREEDY-SET-COVER(U, F)
@@ -653,7 +653,7 @@ print(greedy_set_cover(U, F))  # ['S1', 'S2', 'S3']`,
     complexityNote: "主定理給的是遞迴式的解，不是單一演算法的複雜度。",
     workedExample: {
       title: "三道標準題",
-      input: "判斷情況並給 Θ",
+      input: "寫成 T(n)=aT(n/b)+f(n)，比較 f(n) 與 n 的 log_b a 次方，決定落在哪一種情況",
       steps: [
         {
           title: "T(n)=8T(n/2)+n²",

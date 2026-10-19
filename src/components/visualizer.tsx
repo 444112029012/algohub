@@ -36,7 +36,7 @@ const KIND_CLASS: Record<ArrayKind, string> = {
 
 const KIND_LABEL: Record<ArrayKind, string> = {
   compare: "比較",
-  pivot: "樞紐 / 根",
+  pivot: "Pivot / 根",
   sorted: "已定位",
   left: "左",
   right: "右",

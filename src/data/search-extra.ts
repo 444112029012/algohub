@@ -14,7 +14,7 @@ export const searchExtraLessons: Algorithm[] = [
     whenToUse: [
       "最小化最大值／最大化最小值，且單調",
       "不易直接設計動態規劃或貪婪，但給定候選答案容易驗證",
-      "實數答案配 EPS；整數答案用 lo/hi 邊界",
+      "實數答案要另設容許誤差；整數答案用 lo/hi 邊界",
     ],
     examTips: [
       "先證明單調：x 可行 ⇒ x+1 可行（求最小時）。",

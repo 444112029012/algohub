@@ -196,7 +196,7 @@ export function quickSortTrace(input = DEMO_ARRAY): ArrayFrame[] {
   frames.push({
     array: [...a],
     highlights: [],
-    message: `初始陣列：[${a.join(", ")}]。Lomuto 分割：最右當樞紐。`,
+    message: `初始陣列：[${a.join(", ")}]。Lomuto 分割：最右邊的元素當 Pivot，從左把不大於它的換到左邊。`,
   });
   const settled = new Set<number>();
 
@@ -208,7 +208,7 @@ export function quickSortTrace(input = DEMO_ARRAY): ArrayFrame[] {
         ...rangeHi(lo, hi, "range"),
         { index: hi, kind: "pivot" },
       ],
-      message: `區間 [${lo}..${hi}]，樞紐 pivot = ${pivot}（最右）`,
+      message: `區間 [${lo}..${hi}]，Pivot = ${pivot}（最右）`,
       lo,
       hi,
     });
@@ -221,7 +221,7 @@ export function quickSortTrace(input = DEMO_ARRAY): ArrayFrame[] {
           { index: j, kind: "compare" },
           { index: i, kind: "write" },
         ],
-        message: `比較 a[${j}]=${a[j]} 與 pivot ${pivot}`,
+        message: `比較 a[${j}]=${a[j]} 與 Pivot ${pivot}`,
         lo,
         hi,
       });
@@ -245,7 +245,7 @@ export function quickSortTrace(input = DEMO_ARRAY): ArrayFrame[] {
     frames.push({
       array: [...a],
       highlights: [{ index: i, kind: "pivot" }],
-      message: `樞紐就位：${a[i]} 放到最終位置 ${i}`,
+      message: `Pivot 就位：${a[i]} 放到最終位置 ${i}`,
       lo,
       hi,
     });
@@ -789,7 +789,7 @@ export function topoTrace(): GraphFrame[] {
   frames.push({
     nodeStates: { ...nodeStates },
     edgeStates: { ...edgeStates },
-    message: "Kahn 演算法：入度為 0 的點先入佇列。",
+    message: "Kahn 拓樸排序：入度為 0（沒有箭頭指進來）的點先入佇列。",
     structureLabel: "Queue / 拓樸序",
     structure: [`Q=${q.join(",")}`, `序=${order.join(" ")}`],
   });
@@ -1246,7 +1246,7 @@ export function setCoverTrace(): SetCoverFrame[] {
 
   frames.push(
     snapshot(
-      `貪婪用了 ${picked.length} 個集合：{${picked.join(", ")}}。OPT 是 {S2, S3} 只要 2 個。`
+      `貪婪用了 ${picked.length} 個集合：{${picked.join(", ")}}。最佳解是 {S2, S3}，只要 2 個。`
     )
   );
   return frames;
@@ -1610,7 +1610,7 @@ export function vertexCoverTrace(): GraphFrame[] {
   frames.push({
     nodeStates: { ...nodeStates },
     edgeStates: { ...edgeStates },
-    message: `|C|=${cover.size} ≤ 2·OPT，因為 OPT 至少要為每條匹配邊付一個點。`,
+    message: `選了 ${cover.size} 個點，不超過最佳解的兩倍：最佳解至少要為每一條匹配邊付一個點。`,
     structureLabel: "覆蓋 / 匹配邊",
     structure: [`C={${[...cover].join(",")}}`, ...taken],
   });

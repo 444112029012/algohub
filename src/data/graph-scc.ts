@@ -176,7 +176,7 @@ TARJAN(u)                       // 一次 DFS
     english: "2-SAT",
     category: "graph",
     examWeight: "高",
-    tags: ["可滿足性", "SCC", "implication graph"],
+    tags: ["可滿足性", "強連通分量", "蘊含圖"],
     summary:
       "每個括號裡剛好兩個條件時，這題可以在多項式時間解完。把「a 或 b」畫成兩條箭頭：不是 a 就一定是 b、不是 b 就一定是 a。再求強連通分量；如果某個變數和它的否定在同一個分量，就無解。三個條件一組的 3-SAT 反而是 NPC。",
     idea: "「a 或 b」的意思是：a 若是假的，b 就必須是真的。例如 (x∨y) 要畫成兩條箭頭：不是 x 就一定是 y、不是 y 就一定是 x。若 x 能走到 ¬x、¬x 又能走回 x，賦值會打架，這題無解。否則把分量縮成沒有環的圖，從後面往前設值。",
@@ -186,12 +186,12 @@ TARJAN(u)                       // 一次 DFS
     ],
     examTips: [
       "變數 x 拆成點 x 與 ¬x，共 2n 點、O(m) 邊，Θ(n+m)。",
-      "不可滿足 ⇔ 存在 x，x 與 ¬x 同 SCC。",
-      "3-SAT 不能這樣建：一個三元子句推不出兩條 implication 就夠用。",
+      "無解的充要條件：某個 x 和 ¬x 落在同一個強連通分量。",
+      "3-SAT 不能這樣建：一個含三個文字的子句，畫不成「不是 a 就必須到 b」這種兩條箭頭。",
       "(x∨x) 是 (x)，仍可放進 2-SAT（¬x→x）。",
     ],
     pitfalls: [
-      "忘了每個子句要加兩條反向 implication。",
+      "每個「a 或 b」要畫兩條箭頭，漏了反向那條。",
       "x 與 ¬x 同分量仍硬給值。",
       "以為 2-SAT 也 NP-complete。",
     ],
@@ -201,13 +201,13 @@ TARJAN(u)                       // 一次 DFS
       timeWorst: "Θ(n+m)",
       space: "Θ(n+m)",
     },
-    complexityNote: "n 個變數、m 個子句。瓶頸是 SCC。",
+    complexityNote: "n 個變數、m 個子句。時間主要花在求強連通分量。",
     workedExample: {
       title: "(x∨y) ∧ (¬x∨y) ∧ (¬y∨z)",
       input: "三個二元子句",
       steps: [
-        { title: "implication", detail: "(x∨y)⇒ ¬x→y、¬y→x；(¬x∨y)⇒ x→y、¬y→¬x；(¬y∨z)⇒ y→z、¬z→¬y。" },
-        { title: "SCC", detail: "y 與 z 可同向強制；x 與 ¬x 不在同一分量。" },
+        { title: "蘊含邊", detail: "「a 或 b」畫成兩條箭頭：不是 a 就必須到 b、不是 b 就必須到 a。(x∨y) 得到 ¬x→y、¬y→x；(¬x∨y) 得到 x→y、¬y→¬x；(¬y∨z) 得到 y→z、¬z→¬y。" },
+        { title: "強連通分量", detail: "彼此互相走得到的點放在同一分量。y 與 z 會被同一方向強制；x 與 ¬x 不在同一分量，所以還有解。" },
         { title: "賦值", detail: "y 必須真（x 真或假都會推到 y），z 真。x 可假。滿足。" },
       ],
       result: "可滿足，例如 x=假、y=真、z=真",
@@ -334,7 +334,7 @@ TARJAN(u)                       // 一次 DFS
         prompt: "2-SAT 的複雜度類？",
         options: ["NP-complete", "在 P（SCC 線性）", "PSPACE-complete", "不可判定"],
         answer: 1,
-        explanation: "implication graph + SCC。3-SAT 才是 NPC。",
+        explanation: "畫成蘊含圖再求強連通分量。三個文字一組的 3-SAT 才是 NP-complete。",
       },
       {
         id: "sat2",

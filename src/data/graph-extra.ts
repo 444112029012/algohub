@@ -154,7 +154,7 @@ export const graphExtraLessons: Algorithm[] = [
       title: "從 A 長樹",
       input: "與 Kruskal 同一張示範圖",
       steps: [
-        { title: "A", detail: "跨切最輕是 AB=1。" },
+        { title: "A", detail: "目前樹裡只有 A。連到樹外的邊裡，最輕的是 AB=1，把 B 接進來。" },
         { title: "納 B", detail: "接著 BE=1 或 AD=2，選 BE。" },
         { title: "納 E 再 F", detail: "EF=1。然後 AD=2、CF=3。" },
       ],
@@ -281,9 +281,9 @@ export const graphExtraLessons: Algorithm[] = [
       title: "s-A-t、s-B-t，A→B 容量 1",
       input: "sA3, sB2, AB1, At2, Bt4",
       steps: [
-        { title: "s→A→t", detail: "瓶頸 2，流=2。" },
-        { title: "s→B→t", detail: "瓶頸 2，流=4。" },
-        { title: "s→A→B→t", detail: "瓶頸 1，流=5。無法再增廣。" },
+        { title: "s→A→t", detail: "這條路上最小的剩餘容量是 2，流量累計 2。" },
+        { title: "s→B→t", detail: "這條路上最小的剩餘容量是 2，流量累計 4。" },
+        { title: "s→A→B→t", detail: "這條路上最小的剩餘容量是 1，流量累計 5。之後找不到還有剩餘容量的路。" },
       ],
       result: "最大流 5 = 最小割容量",
     },

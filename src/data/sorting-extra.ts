@@ -446,7 +446,7 @@ export const sortingExtraLessons: Algorithm[] = [
     examWeight: "高",
     tags: ["非比較排序", "穩定", "LSD"],
     summary:
-      "由低位到高位，每一位做一次穩定計數排序。d 位、進位 r 時 Θ(d(n+r))。LSD 依賴穩定；MSD 是另一套。",
+      "LSD（低位先）從個位排到高位，每一位做一次穩定計數排序。MSD（高位先）是從最高位開始的另一套。d 位、進位 r 時 Θ(d(n+r))。低位先的每一輪都必須穩定。",
     idea: "個位排好且穩定後，再排十位時，十位相同的人會保留個位次序，於是兩位都對。如此推到最高位。",
     whenToUse: [
       "固定位數的整數或定長字串",
@@ -456,10 +456,10 @@ export const sortingExtraLessons: Algorithm[] = [
     examTips: [
       "必須穩定。不穩定的位數排序會把低位成果打亂。",
       "d=Θ(log_r U)，U 是值上界。",
-      "MSD radix 像 trie，可跳過前導 0，但實作與穩定性討論不同。考試預設 LSD。",
+      "MSD（高位先）像字典樹，可跳過前導 0。考試預設 LSD，也就是先個位、再十位。",
     ],
     pitfalls: [
-      "先排高位（卻用 LSD 直覺）會錯。",
+      "題目要求低位先，卻先排最高位，低位已經排好的次序會被打亂。",
       "位數排序用不穩定的選擇排序。",
     ],
     complexity: {
@@ -472,7 +472,7 @@ export const sortingExtraLessons: Algorithm[] = [
     },
     complexityNote: "十進位 r=10；位元組 r=256。d 是位數。",
     workedExample: {
-      title: "LSD [38, 27, 43, 3, 9, 82, 10]",
+      title: "低位先（LSD）[38, 27, 43, 3, 9, 82, 10]",
       input: "先個位再十位，每一輪穩定計數、從右填",
       steps: [
         {
@@ -578,26 +578,26 @@ def _by_digit(a: list[int], exp: int) -> list[int]:
   {
     slug: "quickselect",
     name: "Quickselect",
-    english: "Quickselect / Hoare Selection",
+    english: "Quickselect",
     category: "sorting",
     examWeight: "高",
     tags: ["選擇問題", "期望線性", "分治"],
     summary:
-      "找第 k 小（或中位數）不必排完全部。Lomuto／Hoare 分割後只走樞紐的那一側。平均 Θ(n)，最壞 Θ(n²)。",
-    idea: "分割完樞紐在 p。k=p 就找到；k<p 丟右邊；k>p 丟左邊。期望每次切半，T(n)=T(n/2)+Θ(n)=Θ(n)。最壞每次少 1 個變成 Θ(n²)。",
+      "找第 k 小（或中位數）不必排完全部。下面用 Lomuto 分割：區間最右的元素當 Pivot，分割後它落在最終索引 p。k 等於 p 就找到，否則只往 k 所在的那一側繼續。平均 Θ(n)，最壞 Θ(n²)。",
+    idea: "這個選第 k 小的方法也叫 Hoare 的選擇演算法。Hoare 分割是另一種寫法：左右同時往中間找，結束時 Pivot 不一定在最終位置。本篇程式與手算都用 Lomuto，所以 p 就是 Pivot 的最終索引。k < p 時丟掉右邊，k > p 時丟掉左邊。期望每次切掉固定比例，T(n)=T(n/2)+Θ(n)=Θ(n)。最壞每次只淘汰 Pivot 自己，變成 Θ(n²)。",
     whenToUse: [
-      "中位數、第 k 名、BFPRT 對照",
+      "只要中位數或第 k 名，不必排出整個序列",
       "不需要完整排序時比 Heap／排序快（平均）",
     ],
     examTips: [
-      "隨機樞紐 ⇒ 期望 Θ(n)。最壞仍 n²。",
-      "最壞線性：median-of-medians（5 個一組）可保證 Θ(n)，常數大。",
+      "隨機選 Pivot 時期望 Θ(n)，最壞仍是 Θ(n²)。",
+      "最壞要保證線性，用中位數的中位數（也叫 BFPRT）：五個一組取中位數，再用那些中位數的中位數當 Pivot。常數大。",
       "k 從 0 或 1 起算要在題目寫清。",
       "完整 Quicksort 兩側都遞迴；select 只一側。",
     ],
     pitfalls: [
       "兩側都遞迴，變成排序。",
-      "k 與分割後索引的 0/1-based 搞混。",
+      "k 從 0 還是從 1 起算沒寫清楚，會找錯一格。",
     ],
     complexity: {
       timeBest: "Θ(n)",
@@ -610,15 +610,15 @@ def _by_digit(a: list[int], exp: int) -> list[int]:
     complexityNote: "主定理不直接套（切點隨機）。平均以積分／指示變數證明為 Θ(n)。",
     workedExample: {
       title: "在 [38,27,43,3,9,82,10] 找第 4 小（k=3）",
-      input: "Lomuto，最右當樞紐",
+      input: "Lomuto 分割：最右的 10 當 Pivot。比它小或相等的換到左邊，10 換到分界後，再看第 4 小（索引從 0 起算是 3）在哪一側",
       steps: [
-        { title: "第一次分割", detail: "樞紐 10，就位後左邊都 ≤10。10 的索引若不是 3，看 k 在哪側。" },
-        { title: "只走一側", detail: "直到樞紐索引 = 3。答案是 27。" },
+        { title: "第一次分割", detail: "Pivot 是 10。就位後左邊都 ≤ 10。10 的索引若不是 3，就只繼續 3 所在的那一側。" },
+        { title: "只走一側", detail: "直到 Pivot 的索引等於 3。答案是 27。" },
       ],
       result: "第 4 小 = 27（排序後 [3,9,10,27,...]）",
     },
     visualizer: "array",
-    pseudocode: `QUICKSELECT(A, lo, hi, k)     // 0-based，找 A 的第 k 小
+    pseudocode: `QUICKSELECT(A, lo, hi, k)     // 索引從 0 起算，找第 k 小
   if lo = hi: return A[lo]
   p ← PARTITION(A, lo, hi)
   if k = p: return A[p]
@@ -685,16 +685,16 @@ def _by_digit(a: list[int], exp: int) -> list[int]:
       {
         id: "qs2",
         prompt: "和 Quicksort 的關鍵差？",
-        options: ["不用樞紐", "只遞迴一側", "一定穩定", "只要陣列已排序"],
+        options: ["不用 Pivot", "只遞迴一側", "一定穩定", "只要陣列已排序"],
         answer: 1,
         explanation: "排序兩側都要；選擇只需要 k 所在那側。",
       },
       {
         id: "qs3",
         prompt: "保證最壞線性的是？",
-        options: ["永遠最右當樞紐", "median-of-medians", "氣泡選第 k", "BFS"],
+        options: ["永遠拿最右當 Pivot", "中位數的中位數", "用氣泡排序找第 k 小", "廣度優先搜尋"],
         answer: 1,
-        explanation: "BFPRT：五個一組取中位數再當樞紐。",
+        explanation: "五個一組取中位數，再用這些中位數的中位數當 Pivot。這個作法也叫 BFPRT，最壞仍是線性時間。",
       },
     ],
     related: ["quick-sort", "heap", "binary-search-answer"],
