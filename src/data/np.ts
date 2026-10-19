@@ -40,7 +40,7 @@ export const npLessons: Algorithm[] = [
       input: "無向圖 A—B—C，A—D，B—E，E—F，C—F，D—E，B—D",
       steps: [
         { title: "取 AB", detail: "C←{A,B}，刪 AB,AD,BC,BE,BD。" },
-        { title: "剩餘 CF,DE,EF", detail: "取 CF，C←{A,B,C,F}，刪 CF,EF。" },
+        { title: "剩餘 CF、DE、EF", detail: "三條都能抓。列出順序 CF 在前，所以抓 CF，不是因為它比 EF 好。F 被選到後，EF 也被蓋掉。" },
         { title: "剩餘 DE", detail: "取 DE，C←{A,B,C,F,D,E}。" },
         { title: "保證", detail: "|C| 是匹配大小的兩倍，故 ≤ 2·OPT。" },
       ],
@@ -168,7 +168,7 @@ export const npLessons: Algorithm[] = [
       ],
       result: "三個數字由 |V| 與補集關係綁在一起",
     },
-    visualizer: "none",
+    visualizer: "graph",
     pseudocode: `關係（考試默寫）
   Clique(G,k)  ⇔  IndependentSet(Ḡ, k)
   IndependentSet(G,k)  ⇔  VertexCover(G, |V|-k)
@@ -185,10 +185,25 @@ def is_independent(g: dict[str, set[str]], nodes: list[str]) -> bool:
 
 def vc_from_is(all_nodes: list[str], indep: list[str]) -> set[str]:
     return set(all_nodes) - set(indep)`,
-      cpp: `// 化約是證明題。檢查函數：
-// Clique：誘導子圖邊數 = k(k-1)/2
-// Independent set：誘導子圖邊數 = 0
-// Vertex cover：每條邊至少一端在 C`,
+      cpp: `bool is_clique(const vector<vector<int>>& g, const vector<int>& nodes) {
+    for (int i = 0; i < (int)nodes.size(); ++i)
+        for (int j = i + 1; j < (int)nodes.size(); ++j)
+            if (!g[nodes[i]][nodes[j]]) return false;
+    return true;
+}
+bool is_independent(const vector<vector<int>>& g, const vector<int>& nodes) {
+    for (int i = 0; i < (int)nodes.size(); ++i)
+        for (int j = i + 1; j < (int)nodes.size(); ++j)
+            if (g[nodes[i]][nodes[j]]) return false;
+    return true;
+}
+vector<int> cover_from_independent(int n, const vector<int>& indep) {
+    vector<char> in(n);
+    for (int v : indep) in[v] = 1;
+    vector<int> cover;
+    for (int v = 0; v < n; ++v) if (!in[v]) cover.push_back(v);
+    return cover;
+}`,
       typescript: `function isClique(adj: Record<string, string[]>, nodes: string[]) {
   const s = new Set(nodes);
   for (const u of s)
@@ -268,7 +283,7 @@ def vc_from_is(all_nodes: list[str], indep: list[str]) -> set[str]:
       ],
       result: "SAT ≤p 3-SAT ≤p Independent Set ≤p Vertex Cover",
     },
-    visualizer: "none",
+    visualizer: "graph",
     pseudocode: `3-SAT
   輸入：CNF，每子句 3 個文字
   問：是否存在 0/1 賦值使每個子句至少一個文字為真
@@ -285,8 +300,12 @@ def vc_from_is(all_nodes: list[str], indep: list[str]) -> set[str]:
 
 # (x1 ∨ ¬x2 ∨ x3)
 print(eval_3sat([(1, -2, 3)], {1: True, 2: True, 3: False}))`,
-      cpp: `// 考試默寫化約鏈即可。2-SAT：建 implication graph，
-// x∨y 變成 ¬x→y 與 ¬y→x，同一變數 x 與 ¬x 不能在同一 SCC。`,
+      cpp: `bool eval_3sat(const vector<array<int,3>>& clauses, const vector<int>& bit) {
+    auto lit = [&](int x) { return x > 0 ? bit[x] : !bit[-x]; };
+    for (auto [a, b, c] : clauses)
+        if (!(lit(a) || lit(b) || lit(c))) return false;
+    return true;
+}`,
       typescript: `function eval3Sat(
   clauses: [number, number, number][],
   assign: Record<number, boolean>
@@ -371,7 +390,7 @@ print(eval_3sat([(1, -2, 3)], {1: True, 2: True, 3: False}))`,
       ],
       result: "巡迴長度 ≤ 2·OPT",
     },
-    visualizer: "none",
+    visualizer: "graph",
     pseudocode: `METRIC-TSP-APPROX(G, d)        // 三角不等式
   T ← MST(G)
   把 T 每邊複製 → 歐拉圖
@@ -381,16 +400,38 @@ print(eval_3sat([(1, -2, 3)], {1: True, 2: True, 3: False}))`,
 
 對照：歐拉迴路（邊）∈ P；哈密頓迴路（點）NP-c。`,
     codes: {
-      python: `def mst_tsp_bound(mst_weight: float) -> float:
-    """度量 TSP 2-approx 的上界：兩倍 MST。"""
-    return 2 * mst_weight
+      python: `def shortcut_tour(euler: list[int]) -> list[int]:
+    """歐拉迴路抄捷徑：已看過的點跳過，最後回到起點。"""
+    seen: set[int] = set()
+    tour = []
+    for v in euler:
+        if v not in seen:
+            seen.add(v)
+            tour.append(v)
+    if tour:
+        tour.append(tour[0])
+    return tour
 
-# Held–Karp 概念：dp[S][v] = 從 0 走過 S 集合、停在 v 的最短長度
-# 考試默寫狀態 2^n · n 即可。`,
-      cpp: `// 歐拉：Hierholzer，所有點偶度。
-// 哈密頓：沒有已知多項式算法。
-// 度量 TSP：先 Kruskal/Prim 得 MST，再加倍捷徑。`,
-      typescript: `function metricTspUpperBound(mstWeight: number) {
+def metric_tsp_upper(mst_weight: float) -> float:
+    return 2 * mst_weight`,
+      cpp: `vector<int> shortcut_tour(const vector<int>& euler) {
+    int n = 0;
+    for (int v : euler) n = max(n, v + 1);
+    vector<char> seen(n, 0);
+    vector<int> tour;
+    for (int v : euler) if (!seen[v]) { seen[v] = 1; tour.push_back(v); }
+    if (!tour.empty()) tour.push_back(tour[0]);
+    return tour;
+}
+double metric_tsp_upper(double mst) { return 2 * mst; }`,
+      typescript: `function shortcutTour(euler: number[]) {
+  const seen = new Set<number>();
+  const tour: number[] = [];
+  for (const v of euler) if (!seen.has(v)) { seen.add(v); tour.push(v); }
+  if (tour.length) tour.push(tour[0]);
+  return tour;
+}
+function metricTspUpperBound(mstWeight: number) {
   return 2 * mstWeight;
 }`,
     },
@@ -591,7 +632,21 @@ VERTEX-COVER 是每條邊大小為 2 的 Hitting Set。`,
         remaining = [s for s in remaining if best not in s]
         univ.discard(best)
     return picked`,
-      cpp: `// 對偶於 greedy set cover：選「出現在最多尚未擊中集合」的元素。`,
+      cpp: `vector<string> greedy_hitting_set(vector<vector<string>> sets) {
+    vector<string> picked;
+    while (!sets.empty()) {
+        map<string,int> hit;
+        for (auto& s : sets) for (auto& e : s) hit[e]++;
+        string best; int times = -1;
+        for (auto& [e, c] : hit) if (c > times) { times = c; best = e; }
+        if (times <= 0) break;
+        picked.push_back(best);
+        vector<vector<string>> next;
+        for (auto& s : sets) if (find(s.begin(), s.end(), best) == s.end()) next.push_back(s);
+        sets.swap(next);
+    }
+    return picked;
+}`,
       typescript: `function greedyHittingSet(sets: string[][]) {
   let remain = sets.map((s) => new Set(s));
   const picked: string[] = [];

@@ -40,7 +40,7 @@ export function CodeTabs({ codes }: { codes: Record<CodeLang, string> }) {
             >
               {copied === lang ? "已複製" : "複製"}
             </Button>
-            <pre className="overflow-x-auto rounded-xl bg-[#1a2744] p-4 pt-10 text-[13px] leading-relaxed text-[#f4efe4]">
+            <pre className="max-w-full overflow-x-auto rounded-xl bg-[#1a2744] p-4 pt-10 text-[clamp(12px,1.6vw,13px)] leading-relaxed break-words whitespace-pre-wrap text-[#f4efe4]">
               <code>{codes[lang]}</code>
             </pre>
           </div>

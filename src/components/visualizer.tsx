@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -209,12 +210,77 @@ function BellmanModes() {
   );
 }
 
+function ReductionChain({ focus }: { focus: string }) {
+  const rows = [
+    {
+      id: "is",
+      steps: [
+        { slug: "three-sat", label: "3-SAT" },
+        { slug: "clique-independent-set", label: "獨立集" },
+        { slug: "vertex-cover", label: "點覆蓋" },
+      ],
+    },
+    {
+      id: "tsp",
+      steps: [
+        { slug: "three-sat", label: "3-SAT" },
+        { slug: "hamilton-tsp", label: "哈密頓" },
+        { slug: "hamilton-tsp", label: "TSP" },
+      ],
+    },
+    {
+      id: "sum",
+      steps: [
+        { slug: "three-sat", label: "3-SAT" },
+        { slug: "subset-sum", label: "子集和" },
+      ],
+    },
+  ];
+  const note =
+    focus === "clique-independent-set"
+      ? "這一頁站在中間：獨立集和團是補圖，獨立集再補集就是點覆蓋。箭頭方向是「左邊能化約到右邊」，所以右邊至少和左邊一樣難。"
+      : focus === "hamilton-tsp"
+        ? "哈密頓迴路問的是點能不能走完。度量 TSP 先做最小生成樹再加倍、抄捷徑，長度不超過最佳解的兩倍。歐拉迴路問的是邊，那個在 P。"
+        : "3-SAT 是這幾條鏈的起點。要證明右邊是 NP-complete，就寫「3-SAT 能在多項式時間化成它」。箭頭不能反過來背。";
+  return (
+    <div className="space-y-3">
+      <p className="text-sm leading-6">{note}</p>
+      <div className="space-y-2">
+        {rows.map((row) => (
+          <div key={row.id} className="flex flex-wrap items-center gap-2">
+            {row.steps.map((step, i) => (
+              <div key={`${row.id}-${step.label}`} className="flex items-center gap-2">
+                {i > 0 && <span className="text-xs text-muted-foreground">化約 →</span>}
+                <Link
+                  href={`/algorithms/${step.slug}`}
+                  className={cn(
+                    "rounded-lg px-3 py-1.5 text-sm ring-1 ring-border",
+                    step.slug === focus ? "bg-vermillion/15 text-vermillion" : "bg-card"
+                  )}
+                >
+                  {step.label}
+                </Link>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+      <p className="text-xs leading-5 text-muted-foreground">
+        子集和有 Θ(nT) 的表，所以是弱 NP-complete。3-SAT、團、哈密頓沒有這種偽多項式表。
+      </p>
+    </div>
+  );
+}
+
 export function AlgorithmVisualizer({ slug }: { slug: string }) {
   const array = useMemo(() => getArrayTrace(slug), [slug]);
   const graph = useMemo(() => getGraphTrace(slug), [slug]);
   const table = useMemo(() => getTableTrace(slug), [slug]);
   const sets = useMemo(() => getSetCoverTrace(slug), [slug]);
   const intervals = useMemo(() => getIntervalTrace(slug), [slug]);
+  if (slug === "three-sat" || slug === "clique-independent-set" || slug === "hamilton-tsp") {
+    return <ReductionChain focus={slug} />;
+  }
   if (array.length) return <ArrayVis frames={array} tree={slug === "heap" || slug === "heap-sort"} />;
   if (slug === "bellman-ford") return <BellmanModes />;
   if (graph.length) return <GraphVis slug={slug} frames={graph} />;
@@ -238,11 +304,11 @@ function ArrayVis({
   return (
     <div className="space-y-4">
       {tree ? <HeapTree values={f.array} highlights={f.highlights} /> : null}
-      <div className="flex h-44 items-end justify-center gap-1.5 sm:gap-2">
+      <div className="flex h-44 items-end gap-1 sm:gap-1.5">
         {f.array.map((v, idx) => {
           const hi = f.highlights.find((h) => h.index === idx);
           return (
-            <div key={idx} className="flex w-10 flex-col items-center gap-1 sm:w-12">
+            <div key={idx} className="flex min-w-0 flex-1 basis-0 flex-col items-center gap-1">
               <div
                 className={cn(
                   "flex w-full items-end justify-center rounded-md text-xs font-semibold transition-all duration-300",
@@ -337,6 +403,14 @@ function graphLegend(slug: string): { color: string; label: string; dashed?: boo
       { color: NODE_FILL.visited, label: "已經定案" },
       { color: EDGE_STROKE.relaxed, label: "這步把距離改短" },
       { color: EDGE_STROKE.rejected, label: "沒有更短", dashed: true },
+    ];
+  }
+  if (slug === "two-sat") {
+    return [
+      { color: EDGE_STROKE.relaxed, label: "這一對剛加上的箭頭" },
+      { color: EDGE_STROKE.tree, label: "已經畫上的強制關係" },
+      { color: NODE_FILL.visited, label: "這組解裡設成真" },
+      { color: NODE_FILL.done, label: "這組解裡設成假的那側" },
     ];
   }
   if (slug === "bst") {
@@ -648,7 +722,7 @@ function TableVis({ frames }: { frames: ReturnType<typeof getTableTrace> }) {
         </p>
       )}
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[320px] border-collapse text-center text-sm">
+        <table className="w-full min-w-0 text-center text-xs sm:text-sm">
           <thead>
             <tr>
               <th className="border border-border bg-muted/60 px-2 py-1.5 font-medium" />

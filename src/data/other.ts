@@ -366,8 +366,31 @@ def huffman_codes(text: str) -> dict[str, str]:
 
     walk(heap[0], "")
     return codes`,
-      cpp: `// 概念：priority_queue 存 (freq, id)，合併 n-1 次後對樹 DFS 賦碼
-// 完整樹節點結構略，考試默寫上述 HUFFMAN 虛擬碼即可。`,
+      cpp: `struct Huff {
+    int f; string ch; int l = -1, r = -1;
+};
+map<string,string> huffman_codes(vector<pair<string,int>> freq) {
+    vector<Huff> nodes;
+    vector<int> live;
+    for (auto [ch, f] : freq) {
+        nodes.push_back({f, ch});
+        live.push_back((int)nodes.size() - 1);
+    }
+    while (live.size() > 1) {
+        sort(live.begin(), live.end(), [&](int a, int b) { return nodes[a].f < nodes[b].f; });
+        int L = live[0], R = live[1];
+        live.erase(live.begin(), live.begin() + 2);
+        nodes.push_back({nodes[L].f + nodes[R].f, "", L, R});
+        live.push_back((int)nodes.size() - 1);
+    }
+    map<string,string> codes;
+    function<void(int,string)> walk = [&](int i, string p) {
+        if (nodes[i].l < 0) codes[nodes[i].ch] = p.empty() ? "0" : p;
+        else { walk(nodes[i].l, p + "0"); walk(nodes[i].r, p + "1"); }
+    };
+    if (!live.empty()) walk(live[0], "");
+    return codes;
+}`,
       typescript: `type HuffNode = { f: number; ch?: string; l?: HuffNode; r?: HuffNode };
 
 function huffmanCodes(freq: Record<string, number>) {
