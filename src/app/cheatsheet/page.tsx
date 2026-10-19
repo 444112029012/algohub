@@ -29,7 +29,7 @@ const dpRows = [
   ["子集覆蓋（貪婪）", "O(m² n)", "每次選新覆蓋最多", "精確版 NP-hard，近似比 H(n)"],
   ["Huffman", "O(n log n)", "合併頻率最小的兩棵樹", "前綴碼、平均碼長"],
   ["LCS", "Θ(mn)", "子序列可跳字", "不是最長共同子字串"],
-  ["LIS（耐心排序）", "O(n log n)", "最長遞增子序列", "DP 樸素是 O(n²)"],
+  ["LIS（Patience Sorting）", "O(n log n)", "最長遞增子序列", "DP 樸素是 O(n²)"],
   ["編輯距離", "Θ(mn)", "插刪替", "相同走左上 +0"],
   ["矩陣鏈乘", "Θ(n³)", "區間動態規劃，枚舉最後一次切開", "卡特蘭數是括號化方案數，不是最少乘法"],
   ["活動選擇", "O(n log n)", "結束最早", "貪婪即最優"],
@@ -39,10 +39,12 @@ function CheatTable({
   title,
   headers,
   rows,
+  slugs,
 }: {
   title: string;
   headers: string[];
   rows: string[][];
+  slugs: string[];
 }) {
   return (
     <Card className="cheat-fit paper-card overflow-hidden">
@@ -51,9 +53,13 @@ function CheatTable({
       </CardHeader>
       <CardContent className="px-0 pb-0">
         <div className="cheat-cards space-y-2 px-4 pb-4">
-          {rows.map((row) => (
-            <div key={row[0]} className="rounded-lg bg-muted/50 px-3 py-2">
-              <p className="font-medium">{row[0]}</p>
+          {rows.map((row, rowIndex) => (
+            <div key={slugs[rowIndex]} className="rounded-lg bg-muted/50 px-3 py-2">
+              <p className="font-medium">
+                <Link href={`/algorithms/${slugs[rowIndex]}`} className="underline-offset-4 hover:underline">
+                  {row[0]}
+                </Link>
+              </p>
               <dl className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
                 {headers.slice(1).map((header, index) => (
                   <div key={header} className="min-w-0">
@@ -77,11 +83,17 @@ function CheatTable({
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => (
-                <tr key={row[0]} className="border-t border-border">
+              {rows.map((row, rowIndex) => (
+                <tr key={slugs[rowIndex]} className="border-t border-border">
                   {row.map((cell, index) => (
-                    <td key={`${row[0]}-${index}`} className="px-3 py-2 align-top break-words">
-                      {cell}
+                    <td key={`${slugs[rowIndex]}-${index}`} className="px-3 py-2 align-top break-words">
+                      {index === 0 ? (
+                        <Link href={`/algorithms/${slugs[rowIndex]}`} className="underline-offset-4 hover:underline">
+                          {cell}
+                        </Link>
+                      ) : (
+                        cell
+                      )}
                     </td>
                   ))}
                 </tr>
@@ -108,6 +120,7 @@ export default function CheatsheetPage() {
       <CheatTable
         title="排序"
         headers={["演算法", "最好", "平均", "最壞", "空間", "穩定", "原地"]}
+        slugs={sortingCheat.map((r) => r.slug)}
         rows={sortingCheat.map((r) => [
           r.name,
           r.best,
@@ -119,19 +132,30 @@ export default function CheatsheetPage() {
         ])}
       />
 
-      <CheatTable title="圖論" headers={["演算法", "時間", "典型用途", "陷阱"]} rows={graphRows} />
+      <CheatTable
+        title="圖論"
+        headers={["演算法", "時間", "典型用途", "陷阱"]}
+        slugs={["bfs", "dfs", "dijkstra", "bellman-ford", "floyd-warshall", "kruskal", "prim", "topo-sort", "scc", "two-sat", "max-flow"]}
+        rows={graphRows}
+      />
 
-      <CheatTable title="動態規劃與貪婪"         headers={["問題", "時間", "重點", "常見混淆"]} rows={dpRows} />
+      <CheatTable
+        title="動態規劃與貪婪"
+        headers={["問題", "時間", "重點", "常見混淆"]}
+        slugs={["knapsack", "unbounded-knapsack", "fractional-knapsack", "set-cover", "huffman", "lcs", "lis", "edit-distance", "matrix-chain", "activity-selection"]}
+        rows={dpRows}
+      />
 
       <CheatTable
         title="搜尋與資料結構"
         headers={["主題", "時間", "重點", "常見混淆"]}
+        slugs={["binary-search", "binary-search-answer", "quickselect", "stack", "queue", "bst", "hash", "heap", "union-find"]}
         rows={[
           ["二分搜尋", "Θ(log n)", "已排序／單調", "lo/hi 邊界"],
-          ["二分搜尋答案", "Θ(T log R)", "謂詞單調", "搜尋空間是答案，不是下標"],
+          ["二分搜尋答案", "Θ(T log R)", "check(x) 單調", "搜尋空間是答案，不是下標"],
           ["Quickselect", "期望 Θ(n)", "第 k 小；Lomuto 分割後只走一側", "最壞 n²；中位數的中位數可把最壞壓成線性"],
           ["堆疊", "push／pop Θ(1)", "後進先出", "深度優先搜尋用堆疊，廣度優先搜尋用佇列"],
-          ["佇列", "enqueue／dequeue Θ(1)", "先進先出", "以陣列刪除隊首為 Θ(n)"],
+          ["佇列", "enqueue／dequeue Θ(1)", "先進先出", "以普通陣列刪除佇列前端是 Θ(n)"],
           ["二元搜尋樹", "平衡 Θ(log n)", "左小右大", "不平衡時 Θ(n)；不是堆積"],
           ["雜湊表", "平均 Θ(1)", "鍵 % 桶數，碰撞用鏈", "最壞 Θ(n)"],
           ["二元堆積", "insert／pop O(log n)", "建堆 Θ(n)", "索引從 0 起算時，左孩是 2i+1"],
@@ -141,11 +165,12 @@ export default function CheatsheetPage() {
       <CheatTable
         title="NP-complete 與近似"
         headers={["問題", "關係", "考試重點", "近似"]}
+        slugs={["three-sat", "clique-independent-set", "vertex-cover", "hitting-set", "hamilton-tsp", "subset-sum"]}
         rows={[
           ["3-SAT", "化約起點（2-SAT 在 P）", "A ≤p B 表示 B 至少與 A 一樣難", "—"],
           ["團／獨立集", "補圖互化", "獨立集大小 k ⇔ 點覆蓋 n-k", "團沒有好的常數近似"],
           ["點覆蓋", "V\\C 是獨立集", "匹配兩端", "2-approx"],
-          ["子集覆蓋／擊中集", "關聯矩陣對偶", "每次選新覆蓋最多", "H(n)≈ln n"],
+          ["子集覆蓋／擊中集", "元素與集合角色對調", "每次選新覆蓋最多", "H(n)≈ln n"],
           ["哈密頓／TSP", "歐拉在 P、哈密頓 NPC", "度量才有 MST 加倍", "度量 2-approx"],
           ["子集和／分割", "弱 NP-complete", "Θ(nT) 偽多項式", "可做到完全多項式近似"],
         ]}

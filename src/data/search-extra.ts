@@ -7,9 +7,9 @@ export const searchExtraLessons: Algorithm[] = [
     english: "Binary Search on the Answer",
     category: "search",
     examWeight: "極高",
-    tags: ["單調謂詞", "參數搜尋", "最佳化"],
+    tags: ["check(x)", "單調性", "最佳化"],
     summary:
-      "搜尋對象不是陣列中的元素，而是答案的值域。若謂詞「x 夠大即可行」具單調性，即可在 Θ(T log R) 內求得最小或最大可行答案。研究所實作題與選擇題皆常出現。",
+      "搜尋對象不是陣列中的元素，而是答案的值域。若檢查函式 check(x)「x 夠大即可行」具有單調性，即可在 Θ(T log R) 內求得最小或最大可行答案。研究所實作題與選擇題皆常出現。",
     idea: "設 check(x) 表示「把答案當成 x 時能否在限制內完成」。若 check 由 false 變 true 只跳一次，最小可行 x 就是第一個 true。對 x 二分，每次花 T 時間檢查。經典：Koko 吃香蕉、運送包裹的最小承重、最小最大負荷。",
     whenToUse: [
       "最小化最大值／最大化最小值，且單調",
@@ -23,7 +23,7 @@ export const searchExtraLessons: Algorithm[] = [
       "和「陣列二分」差在：搜尋空間是答案，不是下標。",
     ],
     pitfalls: [
-      "謂詞不單調還硬套（例如有兩個峰）。",
+      "check(x) 不單調還硬套（例如有兩個峰）。",
       "可行時寫 lo=mid 又用 lo+hi+1 溢位／無限迴圈。",
       "check 用浮點累加卻拿去比整數時限。",
     ],

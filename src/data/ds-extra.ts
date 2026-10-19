@@ -28,9 +28,10 @@ export const dsExtraLessons: Algorithm[] = [
       "把 Heap 和 BST 搞混：heap 不支援任意鍵搜尋。",
     ],
     complexity: {
-      timeBest: "find-min Θ(1)",
-      timeAvg: "insert／extract Θ(log n)",
-      timeWorst: "build Θ(n)",
+      timeLabels: ["查最值", "插入或取出", "建堆"],
+      timeBest: "Θ(1)",
+      timeAvg: "Θ(log n)",
+      timeWorst: "Θ(n)",
       space: "Θ(n)",
     },
     complexityNote: "高度 ⌊log₂ n⌋。合併兩個 heap：binary heap 要 Θ(n)，binomial／Fibonacci 較優，考試較少。",

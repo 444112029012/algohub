@@ -44,6 +44,7 @@ export function algorithmsByCategory(id: CategoryId) {
 
 export const sortingCheat = [
   {
+    slug: "bubble-sort",
     name: "氣泡排序",
     best: "Θ(n)",
     avg: "Θ(n²)",
@@ -53,6 +54,7 @@ export const sortingCheat = [
     inPlace: true,
   },
   {
+    slug: "insertion-sort",
     name: "插入排序",
     best: "Θ(n)",
     avg: "Θ(n²)",
@@ -62,6 +64,7 @@ export const sortingCheat = [
     inPlace: true,
   },
   {
+    slug: "selection-sort",
     name: "選擇排序",
     best: "Θ(n²)",
     avg: "Θ(n²)",
@@ -71,6 +74,7 @@ export const sortingCheat = [
     inPlace: true,
   },
   {
+    slug: "merge-sort",
     name: "合併排序",
     best: "Θ(n log n)",
     avg: "Θ(n log n)",
@@ -80,6 +84,7 @@ export const sortingCheat = [
     inPlace: false,
   },
   {
+    slug: "quick-sort",
     name: "快速排序",
     best: "Θ(n log n)",
     avg: "Θ(n log n)",
@@ -89,6 +94,7 @@ export const sortingCheat = [
     inPlace: true,
   },
   {
+    slug: "heap-sort",
     name: "堆積排序",
     best: "Θ(n log n)",
     avg: "Θ(n log n)",
@@ -98,6 +104,7 @@ export const sortingCheat = [
     inPlace: true,
   },
   {
+    slug: "counting-sort",
     name: "計數排序",
     best: "Θ(n+k)",
     avg: "Θ(n+k)",
@@ -107,6 +114,7 @@ export const sortingCheat = [
     inPlace: false,
   },
   {
+    slug: "radix-sort",
     name: "基數排序（低位先）",
     best: "Θ(d(n+r))",
     avg: "Θ(d(n+r))",

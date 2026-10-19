@@ -35,7 +35,10 @@ export default function HomePage() {
         <div className="grid grid-cols-3 gap-2 text-center">
           <HeroStat n={String(algorithms.length)} label="篇教材" />
           <HeroStat n="3" label="種實作語言" />
-          <HeroStat n="極高" label="考頻標籤" />
+          <HeroStat
+            n={String(algorithms.filter((a) => a.examWeight === "極高").length)}
+            label="篇考頻極高"
+          />
         </div>
       </section>
 
@@ -62,7 +65,7 @@ function StudyPath() {
       <div>
         <h2 className="font-heading text-2xl">建議讀序</h2>
         <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
-          八個主題涵蓋選擇題與手算的主線。進入各篇後逐步看圖解，再做三題測驗。
+          九個主題涵蓋選擇題與手算的主線。進入各篇後逐步看圖解，再做三題測驗。
         </p>
       </div>
       <ol className="grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr))]">

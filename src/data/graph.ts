@@ -137,7 +137,7 @@ def bfs(graph: dict[str, list[str]], start: str) -> dict[str, int]:
     tags: ["遍歷", "時間戳", "拓樸"],
     summary:
       "沿一條路走到底再回溯。用堆疊或遞迴。時間戳（發現 / 完成時間）是分類邊、找環、做拓樸與強連通分量的關鍵。",
-    idea: "遞迴展開鄰居。對有向圖，依完成時間戳可把邊分成樹邊、前向邊、後向邊、橫向邊。後向邊 ⇔ 有環。",
+    idea: "遞迴展開鄰居。有向圖看鄰居的顏色：白色是樹邊，灰色是後向邊（指向祖先，代表有環），黑色而且 d[u]<d[v] 是前向邊，黑色而且 d[u]>d[v] 是橫向邊。",
     whenToUse: [
       "偵測環、找連通 / 強連通分量（Tarjan / Kosaraju）",
       "拓樸排序（DAG 的完成時間反序）",
@@ -145,7 +145,8 @@ def bfs(graph: dict[str, list[str]], start: str) -> dict[str, int]:
     ],
     examTips: [
       "時間戳括號性質：區間 [d[u], f[u]] 要麼不相交，要麼包含。",
-      "無向圖只有樹邊與後向邊（沒有前向 / 橫向的標準分法）。",
+      "有向圖：白＝樹邊，灰＝後向邊。黑色且 d[u]<d[v]（鄰居較晚發現）＝前向邊；黑色且 d[u]>d[v]（鄰居較早發現）＝橫向邊。",
+      "無向圖只有樹邊與後向邊。走到父節點的那條邊不要當成後向邊。",
       "複雜度同樣 Θ(V+E)。",
       "森林：對每個尚未拜訪的點當新源。",
     ],
@@ -418,11 +419,13 @@ def dijkstra(graph: dict[str, list[tuple[str, int]]], start: str):
       title: "4 點有向圖手填",
       input: "A→B:3, A→D:5, B→A:2, B→D:4, C→B:1, D→C:2",
       steps: [
-        { title: "k=A", detail: "任何 i→A→j 的路徑開始被考慮。" },
-        { title: "k=B", detail: "C 可經 B 到 A、D。" },
-        { title: "k=C、D", detail: "D→C→B→… 把更遠的點連起來。" },
+        { title: "一開始", detail: "沒有中繼點。AB=3、AD=5、BA=2、BD=4、CB=1、DC=2，其餘 ∞，對角線 0。" },
+        { title: "k=A", detail: "經 A 的新路徑都比較長，這一輪沒有格子變小。" },
+        { title: "k=B", detail: "C→B→A：1+2=3，CA 從 ∞ 改成 3。C→B→D：1+4=5，CD 從 ∞ 改成 5。" },
+        { title: "k=C", detail: "D→C→A：2+3=5，DA 改成 5。D→C→B：2+1=3，DB 改成 3。" },
+        { title: "k=D", detail: "A→D→C：5+2=7，AC 改成 7。B→D→C：4+2=6，BC 改成 6。" },
       ],
-      result: "互動表格會逐步填完整個距離矩陣",
+      result: "AB3、AC7、AD5、BA2、BC6、BD4、CA3、CB1、CD5、DA5、DB3、DC2",
     },
     visualizer: "table",
     pseudocode: `FLOYD-WARSHALL(w)

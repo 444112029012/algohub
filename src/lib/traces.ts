@@ -1988,7 +1988,7 @@ export function unboundedKnapsackTrace(): TableFrame[] {
     colLabels,
     cells: show(),
     highlight: [{ r: 0, c: W }],
-    message: `15 元最少 ${dp[W]} 枚（11+1×4，或 5×3）。貪婪先拿 11 也剛好不是最差。`,
+    message: `15 元最少 ${dp[W]} 枚，是 5+5+5。先拿 11 再補四枚 1 要 5 枚，那是貪婪，比最佳解多。`,
   });
   return frames;
 }

@@ -39,8 +39,10 @@ export const graphSccLessons: Algorithm[] = [
         { title: "第一輪 DFS", detail: "從 A 走進 A-B-C 環再走到 D-E-F。完成序約 C,B,F,E,D,A。" },
         { title: "反向圖", detail: "邊全部翻轉。" },
         { title: "倒序 DFS", detail: "從 A 開始得到 {A,B,C}，再 {D,E}，最後 {F}。" },
+        { title: "Tarjan 的 dfn／low", detail: "鄰居依字母序。A、B、C 的 dfn 是 1、2、3。C→A 是回邊，low[C]=min(3, dfn[A]=1)=1。樹邊把 low 往上傳，low[B]=low[A]=1。" },
+        { title: "彈出分量", detail: "F 的 dfn=low=6，先彈出 {F}。E→D 是回邊，low[E]=dfn[D]=4，不等於 dfn[E]=5。D 的 low 等於 dfn，彈出 {D,E}。最後 A 的 low 等於 dfn，彈出 {A,B,C}。" },
       ],
-      result: "三個 SCC：{A,B,C}、{D,E}、{F}。縮點 A-B-C → D-E → F 是一條鏈。",
+      result: "三個 SCC：{A,B,C}、{D,E}、{F}。縮點後是 A-B-C → D-E → F。",
     },
     visualizer: "graph",
     pseudocode: `KOSARAJU(G)

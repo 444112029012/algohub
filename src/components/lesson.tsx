@@ -138,9 +138,18 @@ export function Lesson({ algorithm }: { algorithm: Algorithm }) {
         <section id="complexity" className="scroll-mt-20 space-y-3">
           <h2 className="font-heading text-2xl">複雜度與性質</h2>
           <div className="grid grid-cols-2 gap-2 min-[480px]:grid-cols-4">
-            <Stat label="最好" value={algorithm.complexity.timeBest} />
-            <Stat label="平均" value={algorithm.complexity.timeAvg} />
-            <Stat label="最壞" value={algorithm.complexity.timeWorst} />
+            <Stat
+              label={algorithm.complexity.timeLabels?.[0] ?? "最好"}
+              value={algorithm.complexity.timeBest}
+            />
+            <Stat
+              label={algorithm.complexity.timeLabels?.[1] ?? "平均"}
+              value={algorithm.complexity.timeAvg}
+            />
+            <Stat
+              label={algorithm.complexity.timeLabels?.[2] ?? "最壞"}
+              value={algorithm.complexity.timeWorst}
+            />
             <Stat label="空間" value={algorithm.complexity.space} />
           </div>
           <div className="flex flex-wrap gap-2 text-sm">
@@ -206,6 +215,9 @@ export function Lesson({ algorithm }: { algorithm: Algorithm }) {
 
         <section id="pseudo" className="scroll-mt-20 space-y-3">
           <h2 className="font-heading text-2xl">虛擬碼</h2>
+          <p className="text-sm leading-6 text-muted-foreground">
+            虛擬碼若從 1 寫到 n，是教科書常見寫法。下方程式與部分手算從 0 起算，同一個位置的下標會差 1。該篇若另有註明，以該篇為準。
+          </p>
           <PseudoBlock text={algorithm.pseudocode} />
         </section>
 
