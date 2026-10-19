@@ -135,7 +135,7 @@ export function Catalog() {
                         </Badge>
                       ))}
                       <span className="ml-auto text-xs text-muted-foreground">
-                        {a.complexity.timeWorst}
+                        {a.complexity.badge ?? a.complexity.timeWorst}
                       </span>
                     </CardContent>
                   </Card>

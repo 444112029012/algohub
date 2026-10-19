@@ -24,7 +24,7 @@ export const graphLessons: Algorithm[] = [
     ],
     pitfalls: [
       "在有不同邊權的圖上誤用 BFS 當最短路。",
-      "沒有 visited，在無向圖會把同一點反覆入隊。",
+      "沒有 visited，在無向圖會把同一點反覆加入佇列。",
     ],
     complexity: {
       timeBest: "Θ(V+E)",
@@ -32,15 +32,15 @@ export const graphLessons: Algorithm[] = [
       timeWorst: "Θ(V+E)",
       space: "Θ(V)",
     },
-    complexityNote: "每個點入隊至多一次，每條邊檢查常數次。",
+    complexityNote: "每個點加入佇列至多一次，每條邊檢查常數次。",
     workedExample: {
       title: "從 A 出發，鄰居依字母序",
       input: "無向圖 A—B—C，A—D，B—E，E—F，C—F",
       steps: [
         { title: "第 0 層", detail: "佇列 [A]，距離 0。" },
-        { title: "第 1 層", detail: "A 的鄰居 B、D 入隊。距離皆 1。" },
+        { title: "第 1 層", detail: "A 的鄰居 B、D 加入佇列。距離皆 1。" },
         { title: "第 2 層", detail: "B 展開 C、E（A 已訪）；D 的 E 已在佇列。" },
-        { title: "第 3 層", detail: "C、E 把 F 入隊，距離 3。結束。" },
+        { title: "第 3 層", detail: "C、E 把 F 加入佇列，距離 3。結束。" },
       ],
       result: "訪問序約為 A, B, D, C, E, F；d(A,F)=3",
     },
@@ -278,9 +278,11 @@ DFS-VISIT(u)
       "把 decrease-key 忘了，重複把同一點丟進 heap 時要跳過過期狀態。",
     ],
     complexity: {
-      timeBest: "O(V²) 或 O(E log V)",
-      timeAvg: "依實作相同",
-      timeWorst: "依實作相同",
+      timeLabels: ["鄰接矩陣", "二元堆積", "費氏堆積"],
+      timeBest: "O(V²)",
+      timeAvg: "O((V+E) log V)",
+      timeWorst: "O(E + V log V)",
+      badge: "二元堆積 O((V+E) log V)",
       space: "Θ(V)",
     },
     complexityNote:
@@ -654,13 +656,13 @@ int kruskal(int n, vector<array<int,3>> e) {
       timeWorst: "Θ(V+E)",
       space: "Θ(V)",
     },
-    complexityNote: "每個點出隊一次，每條邊扣一次入度。",
+    complexityNote: "每個點從佇列取出一次，每條邊扣一次入度。",
     workedExample: {
       title: "Kahn：入度為 0 的點先取出",
       input: "1→2→4→6，1→3→4，3→5→6",
       steps: [
         { title: "入度", detail: "1:0, 2:1, 3:1, 4:2, 5:1, 6:2。佇列先放 1。" },
-        { title: "取 1", detail: "2、3 入度變 0，入隊。" },
+        { title: "取 1", detail: "2、3 入度變 0，加入佇列。" },
         { title: "取 2、3", detail: "4 的入度從 2 降到 0；5 入度變 0。" },
         { title: "取 4、5 再 6", detail: "一種拓樸序：1,2,3,4,5,6。" },
       ],

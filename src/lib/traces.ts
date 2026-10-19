@@ -471,7 +471,7 @@ export function bfsTrace(start = "A"): GraphFrame[] {
     frames.push({
       nodeStates: { ...nodeStates },
       edgeStates: { ...edgeStates },
-      message: `出隊 ${u}，標記已拜訪。依字母序檢查鄰居。`,
+      message: `從佇列取出 ${u}，標記已拜訪。依字母序檢查鄰居。`,
       structureLabel: "Queue",
       structure: [...q],
     });
@@ -484,7 +484,7 @@ export function bfsTrace(start = "A"): GraphFrame[] {
         frames.push({
           nodeStates: { ...nodeStates },
           edgeStates: { ...edgeStates },
-          message: `${to} 尚未拜訪 → 入隊。這條邊進入 BFS 樹。`,
+          message: `${to} 尚未拜訪 → 加入佇列。這條邊進入 BFS 樹。`,
           structureLabel: "Queue",
           structure: [...q],
         });
@@ -822,7 +822,7 @@ export function topoTrace(): GraphFrame[] {
         frames.push({
           nodeStates: { ...nodeStates },
           edgeStates: { ...edgeStates },
-          message: `${v} 入度歸零，入隊。`,
+          message: `${v} 入度歸零，加入佇列。`,
           structureLabel: "Queue / 拓樸序",
           structure: [`Q=${q.join(",")}`, `序=${order.join(" ")}`],
         });

@@ -3,13 +3,13 @@ import type { Algorithm } from "./types";
 export const otherLessons: Algorithm[] = [
   {
     slug: "union-find",
-    name: "並查集",
+    name: "並查集（互斥集）",
     english: "Disjoint Set / Union-Find",
     category: "ds",
     examWeight: "極高",
-    tags: ["資料結構", "Kruskal", "路徑壓縮"],
+    tags: ["互斥集", "Kruskal", "路徑壓縮"],
     summary:
-      "維護不相交集合：Find 問兩人是否同組，Union 合併。搭配路徑壓縮與按秩合併，單次操作幾乎是常數 α(n)。Kruskal、連通性離線詢問都靠它。",
+      "又稱互斥集（Disjoint-set）或 Union-Find。維護不相交集合：Find 問兩人是否同組，Union 合併。搭配路徑壓縮與按秩合併，單次操作幾乎是常數 α(n)。Kruskal、連通性離線詢問都靠它。",
     idea: "六個人一開始各成一組。先把 A 和 B 合併，B 的父親改成 A。再處理 B 和 E 時，先問 B 的老大是誰（已經是 A），再把 E 掛到 A。兩人是否同組，就是看老大是不是同一個人。找老大的路上把沿路的人直接改掛到老大，樹就不會變成一條長鏈，這叫路徑壓縮。",
     whenToUse: [
       "動態連通、最小生成樹",
@@ -654,6 +654,7 @@ print(greedy_set_cover(U, F))  # ['S1', 'S2', 'S3']`,
       timeBest: "Θ(n^{log_b a})",
       timeAvg: "再乘一個 log",
       timeWorst: "Θ(f(n))",
+      badge: "依 f(n) 分三種情況",
       space: "—",
     },
     complexityNote: "主定理給的是遞迴式的解，不是單一演算法的複雜度。",
