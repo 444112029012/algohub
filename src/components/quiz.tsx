@@ -78,14 +78,14 @@ export function Quiz({
           對答案
         </Button>
         {!revealed && answered < questions.length && (
-          <p className="text-sm text-muted-foreground">還有 {questions.length - answered} 題沒選</p>
+          <p className="text-sm text-muted-foreground">尚有 {questions.length - answered} 題未作答</p>
         )}
         {revealed && (
           <p className="text-sm">
             得分 {correct} / {questions.length}
             {correct === questions.length
-              ? " · 這題型你可以上考場了。"
-              : " · 對照解釋再走一遍步驟。"}
+              ? " · 此題型可以應對考試。"
+              : " · 請對照解析，再看一次步驟。"}
           </p>
         )}
       </div>

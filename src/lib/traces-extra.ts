@@ -332,7 +332,7 @@ export function binarySearchAnswerTrace(): ArrayFrame[] {
   frames.push({
     array: [...speeds],
     highlights: [],
-    message: `答案上二分：香蕉堆 [${piles.join(", ")}]，限 ${h} 小時。棒子是「速度」，不是堆本身。`,
+    message: `二分搜尋答案：香蕉堆 [${piles.join(", ")}]，限 ${h} 小時。橫軸是速度，不是堆的下標。`,
   });
   let lo = 0;
   let hi = speeds.length - 1;

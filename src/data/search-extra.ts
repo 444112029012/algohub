@@ -3,17 +3,17 @@ import type { Algorithm } from "./types";
 export const searchExtraLessons: Algorithm[] = [
   {
     slug: "binary-search-answer",
-    name: "答案上二分",
+    name: "二分搜尋答案",
     english: "Binary Search on the Answer",
     category: "search",
     examWeight: "極高",
     tags: ["單調謂詞", "參數搜尋", "最佳化"],
     summary:
-      "不是在陣列裡找值，而是在「答案的值域」上二分。只要謂詞「x 夠大就可行」單調，就能在 Θ(T log R) 找到最小（或最大）可行答案。研究所實作題與選擇題都愛出。",
+      "搜尋對象不是陣列中的元素，而是答案的值域。若謂詞「x 夠大即可行」具單調性，即可在 Θ(T log R) 內求得最小或最大可行答案。研究所實作題與選擇題皆常出現。",
     idea: "設 check(x) 表示「把答案當成 x 時能否在限制內完成」。若 check 由 false 變 true 只跳一次，最小可行 x 就是第一個 true。對 x 二分，每次花 T 時間檢查。經典：Koko 吃香蕉、運送包裹的最小承重、最小最大負荷。",
     whenToUse: [
       "最小化最大值／最大化最小值，且單調",
-      "直接 DP／貪心不好寫，但給定答案容易驗證",
+      "不易直接設計動態規劃或貪婪，但給定候選答案容易驗證",
       "實數答案配 EPS；整數答案用 lo/hi 邊界",
     ],
     examTips: [
@@ -102,10 +102,10 @@ int min_speed(vector<int> p, int h) {
     quiz: [
       {
         id: "bsa1",
-        prompt: "答案上二分能用的前提？",
+        prompt: "二分搜尋答案能用的前提？",
         options: ["資料已排序", "可行與否對答案單調", "圖是 DAG", "必須是比較排序"],
         answer: 1,
-        explanation: "搜的是答案軸，不是原陣列下標。",
+        explanation: "搜尋的是答案的值域，不是原陣列的下標。",
       },
       {
         id: "bsa2",
