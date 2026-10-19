@@ -15,7 +15,7 @@ export default function HomePage() {
           <p className="mt-5 max-w-prose text-[15px] leading-7 text-foreground/80">
             依資訊研究所入學考試整理的 {algorithms.length}{" "}
             篇教材。每篇都有想法、複雜度、手算、虛擬碼，以及 Python / C++ /
-            TypeScript。先走讀序，其餘用考頻「極高」當考前清單。
+            TypeScript。建議依讀序閱讀；未列入而考頻為「極高」者，放在考前清單。
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
@@ -62,7 +62,7 @@ function StudyPath() {
       <div>
         <h2 className="font-heading text-2xl">建議讀序</h2>
         <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
-          八站走完，選擇題和手算的主線就有了。每一站點進去按「下一步」，再做三題測驗。
+          八個主題涵蓋選擇題與手算的主線。進入各篇後逐步看圖解，再做三題測驗。
         </p>
       </div>
       <ol className="grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr))]">
@@ -71,7 +71,7 @@ function StudyPath() {
             key={step.title}
             className="rounded-xl bg-card px-4 py-4 ring-1 ring-border transition-colors hover:bg-muted/40"
           >
-            <p className="text-xs text-muted-foreground">第 {i + 1} 站</p>
+            <p className="text-xs text-muted-foreground">第 {i + 1} 節</p>
             <p className="font-medium">{step.title}</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {step.slugs.map(([slug, label]) => (
@@ -90,7 +90,7 @@ function StudyPath() {
       <div>
         <h2 className="font-heading text-xl">考前清單</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          讀序沒排到、但考頻是極高的篇。考前從這裡補。
+          讀序未列入、考頻為極高的篇目，考前由此補齊。
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           {highs.map((a) => (

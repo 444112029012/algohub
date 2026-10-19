@@ -81,7 +81,7 @@ export const CATEGORIES: {
     id: "search",
     name: "搜尋",
     english: "Search",
-    blurb: "有序序列、答案上二分，以及 lo/hi 邊界。",
+    blurb: "有序序列、二分搜尋答案，以及 lo/hi 邊界。",
   },
   {
     id: "graph",

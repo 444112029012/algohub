@@ -5,7 +5,7 @@
 ## 涵蓋範圍
 
 - 排序：氣泡／插入／選擇、Merge／Quick／Heap、計數／基數、Quickselect
-- 搜尋：二分搜尋、答案上二分
+- 搜尋：二分搜尋、二分搜尋答案
 - 圖論：BFS、DFS、Dijkstra、Bellman-Ford、Floyd–Warshall、Kruskal、Prim、拓樸、最大流、SCC、2-SAT
 - 動態規劃：0/1 背包、無限背包／零錢、LCS、LIS、編輯距離、矩陣鏈乘、子集和
 - 貪婪：Huffman、活動選擇、分數背包、子集覆蓋

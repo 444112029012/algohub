@@ -62,7 +62,7 @@ function PathNav({ slug }: { slug: string }) {
   return (
     <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
       <span className="text-muted-foreground">
-        讀序第 {hop.current.station} 站 · {hop.current.title}
+        讀序第 {hop.current.station} 節 · {hop.current.title}
       </span>
       {hop.prev && (
         <Link href={`/algorithms/${hop.prev.slug}`} className="rounded-full bg-card px-3 py-1 ring-1 ring-border hover:bg-muted">
