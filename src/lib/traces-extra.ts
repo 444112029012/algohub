@@ -361,7 +361,7 @@ export function binarySearchAnswerTrace(): ArrayFrame[] {
   frames.push({
     array: [...speeds],
     highlights: [{ index: ans, kind: "sorted" }],
-    message: `最小可行速度是 ${speeds[ans]}。謂詞「速度 ≥ x 就來得及」單調，才能二分。`,
+    message: `最小可行速度是 ${speeds[ans]}。check(x)「速度 ≥ x 就來得及」要單調，才能二分。`,
   });
   return frames;
 }

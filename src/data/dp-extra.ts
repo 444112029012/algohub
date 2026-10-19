@@ -7,10 +7,10 @@ export const dpExtraLessons: Algorithm[] = [
     english: "LIS",
     category: "dp",
     examWeight: "高",
-    tags: ["DP", "耐心排序", "O(n log n)"],
+    tags: ["DP", "Patience Sorting", "O(n log n)"],
     summary:
       "在一列數字裡找最長、嚴格變大、可以跳過中間項的排法。用 DP 是 O(n²)；用 tails 陣列加二分是 O(n log n)。也可以看成「和排序後序列做 LCS」。",
-    idea: "每個位置問：以這個數字當結尾，前面有誰比它小、而且那個結尾已經最長。沒人可接就長度 1。O(n log n) 的寫法是維持「每個長度目前最小的結尾」，新數字用二分插入或替換。",
+    idea: "dp[i] 定義成：以 A[i] 結尾的最長遞增子序列長度。它等於所有 j<i 且 A[j]<A[i] 的 dp[j] 之中最大的那個再加 1；沒有這樣的 j 就是 1。O(n log n) 的寫法是維持「每個長度目前最小的結尾」，新數字用二分搜尋插入或替換。這個寫法也叫 Patience Sorting。",
     whenToUse: [
       "最長上升走勢、盒子套盒（多維要排序）",
       "對照 LCS：LIS(A) = LCS(A, sort(unique(A)))",
@@ -145,11 +145,12 @@ def lis_nlogn(a: list[int]) -> int:
       title: "CAT → CUT",
       input: "見表格",
       steps: [
-        { title: "C=C", detail: "對角 0。" },
-        { title: "A vs U", detail: "替換成本 1。" },
-        { title: "T=T", detail: "總距離 1。" },
+        { title: "邊界", detail: "CAT 對空字串要刪 3 次，空字串對 CUT 要插 3 次。第一列、第一行是 0、1、2、3。" },
+        { title: "C 對 C", detail: "相同，左上 0 再加 0，這一格是 0。插入或刪除都是 2，比較差。" },
+        { title: "A 對 U", detail: "替換：左上 0+1=1。刪除 A：上方 1+1=2。插入 U：左方 1+1=2。三個裡取 1。" },
+        { title: "右下角 T 對 T", detail: "相同，左上那格再加 0，總距離 1。也就是只把 A 換成 U。" },
       ],
-      result: "1（A→U）",
+      result: "編輯距離 1（把 A 換成 U）",
     },
     visualizer: "table",
     pseudocode: `EDIT(X, Y)

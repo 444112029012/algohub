@@ -19,6 +19,8 @@ export type Complexity = {
   timeBest: string;
   timeAvg: string;
   timeWorst: string;
+  /** 三格不是「最好／平均／最壞」時改欄名，例如不同問題或不同操作。 */
+  timeLabels?: readonly [string, string, string];
   space: string;
   stable?: boolean;
   inPlace?: boolean;
