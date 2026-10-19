@@ -152,12 +152,62 @@
   .font-heading {
     font-family: var(--font-serif), ui-serif, serif;
   }
+  a,
+  button,
+  summary,
+  [role="button"] {
+    cursor: pointer;
+  }
+  a:focus-visible,
+  button:focus-visible,
+  summary:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .paper-card {
   box-shadow:
     0 1px 0 oklch(1 0 0 / 0.7) inset,
     0 12px 32px -16px oklch(0.3 0.05 250 / 0.18);
+}
+
+.cheat-fit {
+  container-type: inline-size;
+  width: 100%;
+  min-width: 0;
+}
+
+.cheat-cards {
+  display: block;
+}
+
+.cheat-grid {
+  display: none;
+}
+
+@container (min-width: 52rem) {
+  .cheat-cards {
+    display: none;
+  }
+
+  .cheat-grid {
+    display: block;
+    overflow-x: auto;
+  }
 }
 
 .rule-line {

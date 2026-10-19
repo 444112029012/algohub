@@ -6,7 +6,9 @@ import {
   queueTrace,
   stackTrace,
   unionFindTrace,
+  twoSatTrace,
   BST_LAYOUT,
+  TWO_SAT_LAYOUT,
 } from "./traces-ds";
 import {
   SCC_GRAPH,
@@ -457,7 +459,7 @@ export function bfsTrace(start = "A"): GraphFrame[] {
   frames.push({
     nodeStates: { ...nodeStates },
     edgeStates: { ...edgeStates },
-    message: `BFS 從 ${start} 出發。佇列是 FIFO，同層先走完才進下一層。`,
+    message: `從 ${start} 出發。佇列是先進先出：先發現的點先展開，所以同一層會走完才進下一層。`,
     structureLabel: "Queue",
     structure: [...q],
   });
@@ -522,7 +524,7 @@ export function dfsTrace(start = "A"): GraphFrame[] {
   frames.push({
     nodeStates: { ...nodeStates },
     edgeStates: { ...edgeStates },
-    message: `DFS 從 ${start} 出發。堆疊是 LIFO，一路往深處走。`,
+    message: `DFS 從 ${start} 出發。堆疊是後進先出：最後放進去的點先展開，所以會先把一條路走深。`,
     structureLabel: "Stack",
     structure: [...stack],
   });
@@ -687,15 +689,21 @@ export function kruskalTrace(): GraphFrame[] {
     structureLabel: "已排序的邊",
     structure: edges.map(([u, v, w]) => `${u}-${v} (${w})`),
   });
-  for (const [u, v, w] of edges) {
+  for (let idx = 0; idx < edges.length; idx++) {
+    const [u, v, w] = edges[idx]!;
     const k = edgeKey(u, v);
     edgeStates[k] = "active";
     const pu = find(u);
     const pv = find(v);
+    const later = edges
+      .slice(idx + 1, idx + 3)
+      .map(([a, b, ww]) => `${a}-${b}(${ww})`);
     frames.push({
       nodeStates: { ...nodeStates },
       edgeStates: { ...edgeStates },
-      message: `考慮邊 ${u}-${v}（${w}）。find(${u})=${pu}，find(${v})=${pv}`,
+      message: `還沒看過的邊裡，${u}-${v} 最輕，權重 ${w}。更重的先留著${
+        later.length ? `，例如 ${later.join("、")}` : ""
+      }。\n${u} 的組是 ${pu}，${v} 的組是 ${pv}。`,
       structureLabel: "MST 邊",
       structure: [...mst],
     });
@@ -708,7 +716,7 @@ export function kruskalTrace(): GraphFrame[] {
       frames.push({
         nodeStates: { ...nodeStates },
         edgeStates: { ...edgeStates },
-        message: `不同集合 → 加入 MST，並查集合併。`,
+        message: `${pu} 和 ${pv} 是不同組，接上不會繞回自己，所以放進最小生成樹。`,
         structureLabel: "MST 邊",
         structure: [...mst],
       });
@@ -717,7 +725,7 @@ export function kruskalTrace(): GraphFrame[] {
       frames.push({
         nodeStates: { ...nodeStates },
         edgeStates: { ...edgeStates },
-        message: `同一集合 → 會形成環，捨棄。`,
+        message: `${u} 和 ${v} 已經在同一組 ${pu}。再加這條邊會繞回自己，所以丟掉。不是因為它比較重。`,
         structureLabel: "MST 邊",
         structure: [...mst],
       });
@@ -978,54 +986,57 @@ export function floydTrace(): TableFrame[] {
     [INF, INF, 2, 0],
   ];
   const frames: TableFrame[] = [];
-  frames.push({
-    rowLabels: labels,
-    colLabels: labels,
-    cells: d.map((r) => r.map((x) => (x >= INF ? "∞" : x))),
-    highlight: [],
+  const tableHint = {
     rowTitle: "從這一列的點出發",
     colTitle: "走到這一欄的點",
     legend: "∞＝目前還走不通",
-    message: "Floyd：這張表是「從列走到欄」的目前最短路。∞ 代表還沒走通過。每一輪多允許一個中繼站。",
+  };
+  const show = (grid: number[][]) => grid.map((r) => r.map((x) => (x >= INF ? "∞" : x)));
+  frames.push({
+    rowLabels: labels,
+    colLabels: labels,
+    cells: show(d),
+    highlight: [],
+    ...tableHint,
+    message:
+      "這張表是「從列走到欄」目前的最短路。∞ 代表還沒走通過。\n每一輪只多允許一個中繼站。沒變短的格子會跳過，只停在真正改寫的地方。",
   });
   for (let k = 0; k < 4; k++) {
     const next = d.map((r) => [...r]);
+    const changes: { i: number; j: number; via: number; left: number; right: number }[] = [];
     for (let i = 0; i < 4; i++) {
       for (let j = 0; j < 4; j++) {
         const cand = d[i][k] + d[k][j];
-        frames.push({
-          rowLabels: labels,
-          colLabels: labels,
-          cells: next.map((r) => r.map((x) => (x >= INF ? "∞" : x))),
-          highlight: [
-            { r: i, c: j },
-            { r: i, c: k },
-            { r: k, c: j },
-          ],
-          message: `這輪允許經過 ${labels[k]}。\n直走 ${labels[i]}→${labels[j]} 目前是 ${
-            d[i][j] >= INF ? "∞（走不通）" : d[i][j]
-          }。\n繞 ${labels[i]}→${labels[k]}→${labels[j]} 是 ${
-            d[i][k] >= INF || d[k][j] >= INF ? "∞（其中一段走不通）" : cand
-          }。取比較短的。`,
-        });
-        if (d[i][k] + d[k][j] < next[i][j]) next[i][j] = d[i][k] + d[k][j];
+        if (cand < d[i][j]) {
+          next[i][j] = cand;
+          changes.push({ i, j, via: cand, left: d[i][k], right: d[k][j] });
+        }
       }
     }
     d = next;
+    const fmt = (n: number) => (n >= INF ? "∞" : String(n));
+    const bits = changes.map(
+      ({ i, j, via, left, right }) =>
+        `${labels[i]}→${labels[j]} 改成 ${via}（${labels[i]}→${labels[k]}→${labels[j]} = ${fmt(left)}+${fmt(right)}）`
+    );
     frames.push({
       rowLabels: labels,
       colLabels: labels,
-      cells: d.map((r) => r.map((x) => (x >= INF ? "∞" : x))),
-      highlight: [],
-      message: `中繼站 ${labels[k]} 這一輪結束。表上的數字都是「最多只能經過 ${labels[k]} 與更早中繼站」的最短路。`,
+      cells: show(d),
+      highlight: changes.map(({ i, j }) => ({ r: i, c: j, role: "current" as const })),
+      ...tableHint,
+      message: changes.length
+        ? `這一輪多允許經過 ${labels[k]}。只有變短的格子才列出：\n${bits.join("\n")}\n其餘直走已經不比繞 ${labels[k]} 更長，所以不動。`
+        : `這一輪多允許經過 ${labels[k]}。沒有任何一對變短，直走都已經不比繞 ${labels[k]} 更長。`,
     });
   }
   frames.push({
     rowLabels: labels,
     colLabels: labels,
-    cells: d.map((r) => r.map((x) => (x >= INF ? "∞" : x))),
+    cells: show(d),
     highlight: [],
-    message: "完成。時間 Θ(V³)，可處理負權（但不能有負環）。",
+    ...tableHint,
+    message: "四輪都做完。每一輪只多一個中繼站，所以最後任何中繼點都被考慮過。時間 Θ(V³)。有負環時，某點走到自己會變成負的。",
   });
   return frames;
 }
@@ -1085,6 +1096,8 @@ export function getGraphTrace(slug: string): GraphFrame[] {
       return sccTrace();
     case "bst":
       return bstTrace();
+    case "two-sat":
+      return twoSatTrace();
     default:
       return [];
   }
@@ -1311,6 +1324,7 @@ export function graphLayout(slug: string): {
     };
   }
   if (slug === "bst") return BST_LAYOUT;
+  if (slug === "two-sat") return TWO_SAT_LAYOUT;
   return {
     nodes: DEMO_GRAPH.nodes,
     edges: DEMO_GRAPH.undirected.map(([u, v, w]) => ({
@@ -1338,20 +1352,32 @@ export function primTrace(start = "A"): GraphFrame[] {
     structure: [],
   });
   while (inT.size < DEMO_GRAPH.nodes.length) {
-    let best: { u: string; v: string; w: number } | null = null;
+    const cands: { u: string; v: string; w: number }[] = [];
     for (const u of inT) {
       for (const { to, w } of g[u]) {
         if (inT.has(to)) continue;
         const k = edgeKey(u, to);
         edgeStates[k] = "active";
-        if (!best || w < best.w) best = { u, v: to, w };
+        cands.push({ u, v: to, w });
       }
     }
+    const best = cands.reduce<(typeof cands)[number] | null>(
+      (acc, c) => (!acc || c.w < acc.w ? c : acc),
+      null
+    );
     if (!best) break;
+    const others = cands
+      .filter((c) => !(c.u === best.u && c.v === best.v && c.w === best.w))
+      .slice(0, 3)
+      .map((c) => `${c.u}-${c.v}(${c.w})`);
     frames.push({
       nodeStates: { ...nodeStates },
       edgeStates: { ...edgeStates },
-      message: `跨切最輕邊 ${best.u}-${best.v}（${best.w}）。`,
+      message: `樹內是 ${[...inT].join("、")}。一端在樹內、一端在樹外的邊有 ${cands
+        .map((c) => `${c.u}-${c.v}(${c.w})`)
+        .join("、")}。\n最輕的是 ${best.u}-${best.v}（${best.w}），所以接它${
+        others.length ? `。${others.join("、")} 比較重，先留著` : ""
+      }。`,
       structureLabel: "MST",
       structure: [...mst],
     });
@@ -1533,20 +1559,25 @@ export function vertexCoverTrace(): GraphFrame[] {
   frames.push({
     nodeStates: { ...nodeStates },
     edgeStates: { ...edgeStates },
-    message: "2-approx：任取一條剩餘邊，兩端都放進覆蓋，刪掉與這兩點關聯的邊。選出的邊形成匹配。",
+    message:
+      "只要還有邊沒被蓋住，就抓一條，把兩端放進覆蓋，再把碰到這兩端的邊劃掉。\n抓哪一條都可以，不挑最輕、也不挑度數最大。下面依邊的列出順序抓，所以先後不是唯一答案。",
     structureLabel: "覆蓋 / 匹配邊",
     structure: [],
   });
   while (remaining.length) {
     const [u, v] = remaining[0]!;
+    const open = remaining.map(([a, b]) => `${a}-${b}`);
+    const alternatives = open.filter((name) => name !== `${u}-${v}`);
     const k = edgeKey(u, v);
     edgeStates[k] = "active";
     frames.push({
       nodeStates: { ...nodeStates },
       edgeStates: { ...edgeStates },
-      message: `取匹配邊 ${u}-${v}，兩端都進覆蓋。`,
+      message: `還沒被蓋的邊：${open.join("、")}。\n這些都可以抓。列出順序 ${u}-${v} 排在最前，所以抓它${
+        alternatives.length ? `，不是因為它比 ${alternatives.join("、")} 更好` : ""
+      }。${u} 和 ${v} 都放進覆蓋。`,
       structureLabel: "覆蓋 / 匹配邊",
-      structure: [`C={${[...cover].join(",") || "∅"}}`, ...taken],
+      structure: [`C={${[...cover].join(",") || "空"}}`, ...taken],
     });
     cover.add(u);
     cover.add(v);
@@ -1554,6 +1585,9 @@ export function vertexCoverTrace(): GraphFrame[] {
     nodeStates[v] = "visited";
     edgeStates[k] = "tree";
     taken.push(`${u}-${v}`);
+    const killed = remaining
+      .filter(([a, b]) => (a === u || a === v || b === u || b === v) && !(a === u && b === v))
+      .map(([a, b]) => `${a}-${b}`);
     const next = remaining.filter(([a, b]) => a !== u && a !== v && b !== u && b !== v);
     for (const [a, b] of remaining) {
       if (a === u || a === v || b === u || b === v) {
@@ -1566,7 +1600,9 @@ export function vertexCoverTrace(): GraphFrame[] {
     frames.push({
       nodeStates: { ...nodeStates },
       edgeStates: { ...edgeStates },
-      message: `覆蓋 C={${[...cover].join(", ")}}。虛線邊已被這兩點蓋掉。`,
+      message: `覆蓋現在是 {${[...cover].join(", ")}}。\n碰到 ${u} 或 ${v} 的邊被劃掉${
+        killed.length ? `：${killed.join("、")}` : ""
+      }。還剩 ${next.length ? next.map(([a, b]) => `${a}-${b}`).join("、") : "沒有"}。`,
       structureLabel: "覆蓋 / 匹配邊",
       structure: [`C={${[...cover].join(",")}}`, ...taken],
     });
@@ -1682,7 +1718,7 @@ export function maxFlowTrace(): GraphFrame[] {
     }
     frames.push(
       snap(
-        `增廣路 ${path.join("→")}，瓶頸 ${bottle}。`,
+        `BFS 找到的增廣路是 ${path.join("→")}。用 BFS 是因為它先找到邊數最少的路，不是因為這條路流量最大。\n瓶頸是路上殘餘容量最小的那段，這次能再送 ${bottle}。`,
         { ...idleN, ...Object.fromEntries(path.map((id) => [id, "current" as const])) },
         Object.fromEntries(
           path.slice(0, -1).map((u, i) => [`${u}>${path[i + 1]}`, "tree" as const])
@@ -1989,7 +2025,7 @@ export function fractionalKnapsackTrace(): TableFrame[] {
       colLabels,
       cells: sorted.map((x, j) => [x.w, x.v, taken[j]!]),
       highlight: [{ r: i, c: 2 }],
-      message: `拿 ${it.name} ${take}/${it.w}，累計價值 ${value}，剩餘容量 ${cap}。`,
+      message: `拿 ${it.name} ${take}/${it.w}，因為還沒拿的裡面它的價值密度最高（${(it.v / it.w).toFixed(1)}）。密度較低的排在後面。累計價值 ${value}，剩餘容量 ${cap}。`,
     });
     if (cap === 0) break;
   }
@@ -2042,18 +2078,32 @@ export function activityTrace(): IntervalFrame[] {
   frames.push(snap("依結束時間排序後，每次選「結束最早且與已選不衝突」的工作。"));
   let lastEnd = -Infinity;
   for (const it of sorted) {
-    state[it.name] = "cand";
-    frames.push(
-      snap(`考慮 ${it.name} [${it.start},${it.end}]。上一件結束於 ${lastEnd === -Infinity ? "−∞" : lastEnd}。`, it.end)
-    );
-    if (it.start >= lastEnd) {
+    const waiting = sorted
+      .filter((x) => state[x.name] === "idle" && x.name !== it.name)
+      .slice(0, 2)
+      .map((x) => `${x.name} 結束於 ${x.end}`);
+    const fits = it.start >= lastEnd;
+    const prevEnd = lastEnd;
+    if (fits) {
       state[it.name] = "picked";
       lastEnd = it.end;
-      frames.push(snap(`不衝突 → 選 ${it.name}。`, it.end));
     } else {
       state[it.name] = "rejected";
-      frames.push(snap(`${it.name} 與已選重疊，捨棄。`, lastEnd));
     }
+    const prev =
+      prevEnd === -Infinity ? "還沒選過任何一件" : `上一件在 ${prevEnd} 結束`;
+    frames.push(
+      snap(
+        `下一個看 ${it.name} [${it.start},${it.end}]，因為還沒決定的裡面它結束最早。${
+          waiting.length ? `${waiting.join("、")} 更晚，先留著。` : ""
+        }\n${prev}。${
+          fits
+            ? `${it.name} 開始得夠晚，不重疊，所以選它。`
+            : `${it.name} 開始得太早，和已選重疊，所以丟掉。不是因為它比較短。`
+        }`,
+        it.end
+      )
+    );
   }
   frames.push(snap("最優排程：選中的工作數最多（結束最早是正確的貪婪選擇）。"));
   return frames;

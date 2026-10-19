@@ -1,4 +1,4 @@
-import type { GraphFrame, TableFrame } from "./traces";
+import type { GraphEdgeState, GraphFrame, TableFrame } from "./traces";
 
 export const BST_LAYOUT = {
   nodes: [
@@ -15,6 +15,76 @@ export const BST_LAYOUT = {
     { u: "3", v: "6", directed: true },
   ],
 };
+
+export const TWO_SAT_LAYOUT = {
+  nodes: [
+    { id: "¬x", x: 80, y: 46 },
+    { id: "x", x: 250, y: 46 },
+    { id: "¬y", x: 80, y: 128 },
+    { id: "y", x: 250, y: 128 },
+    { id: "¬z", x: 80, y: 210 },
+    { id: "z", x: 250, y: 210 },
+  ],
+  edges: [
+    { u: "¬x", v: "y", directed: true },
+    { u: "¬y", v: "x", directed: true },
+    { u: "x", v: "y", directed: true },
+    { u: "¬y", v: "¬x", directed: true },
+    { u: "y", v: "z", directed: true },
+    { u: "¬z", v: "¬y", directed: true },
+  ],
+};
+
+export function twoSatTrace(): GraphFrame[] {
+  const ids = TWO_SAT_LAYOUT.nodes.map((n) => n.id);
+  const nodeStates: GraphFrame["nodeStates"] = Object.fromEntries(ids.map((id) => [id, "idle" as const]));
+  const edgeStates: Record<string, GraphEdgeState> = {};
+  const frames: GraphFrame[] = [];
+  const snap = (message: string, pair: string[]) => {
+    frames.push({
+      nodeStates: { ...nodeStates },
+      edgeStates: { ...edgeStates },
+      message,
+      structureLabel: "這一對箭頭",
+      structure: pair,
+    });
+  };
+  snap(
+    "公式是 (x∨y) ∧ (¬x∨y) ∧ (¬y∨z)。\n「a 或 b」畫成兩條箭頭：不是 a 就一定是 b、不是 b 就一定是 a。左邊是否定，右邊是肯定。",
+    []
+  );
+  edgeStates["¬x>y"] = "relaxed";
+  edgeStates["¬y>x"] = "relaxed";
+  snap(
+    "子句 (x∨y)。\n不是 x 就必須是 y，所以 ¬x→y。不是 y 就必須是 x，所以 ¬y→x。",
+    ["¬x→y", "¬y→x"]
+  );
+  edgeStates["¬x>y"] = "tree";
+  edgeStates["¬y>x"] = "tree";
+  edgeStates["x>y"] = "relaxed";
+  edgeStates["¬y>¬x"] = "relaxed";
+  snap(
+    "子句 (¬x∨y)。\nx 若是假的這句已經真；若 x 是真的，y 也必須真，所以 x→y。另一條是 ¬y→¬x。",
+    ["x→y", "¬y→¬x"]
+  );
+  edgeStates["x>y"] = "tree";
+  edgeStates["¬y>¬x"] = "tree";
+  edgeStates["y>z"] = "relaxed";
+  edgeStates["¬z>¬y"] = "relaxed";
+  snap(
+    "子句 (¬y∨z)。\ny 若是真的，z 也必須真：y→z。不是 z 就必須不是 y：¬z→¬y。",
+    ["y→z", "¬z→¬y"]
+  );
+  for (const id of ids) nodeStates[id] = "idle";
+  nodeStates.y = "visited";
+  nodeStates.z = "visited";
+  nodeStates["¬x"] = "done";
+  snap(
+    "沿箭頭走：x 到得了 y、z，到不了 ¬x。¬x 到得了 y，到不了 x。\nx 和 ¬x 不在同一群，所以有解。把 y、z 設成真，x 設成假，三個子句都成立。若某個變數和它的否定互相走得到，才是無解。",
+    ["可滿足"]
+  );
+  return frames;
+}
 
 export function bstTrace(): GraphFrame[] {
   const ids = BST_LAYOUT.nodes.map((n) => n.id);

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { algorithms, CATEGORIES, type CategoryId } from "@/data";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,21 @@ const weightClass: Record<string, string> = {
 export function Catalog() {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<CategoryId | "all">("all");
+  const [seen, setSeen] = useState<string[]>([]);
+  const [scores, setScores] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    try {
+      const seenRaw = JSON.parse(localStorage.getItem("algo-seen") ?? "[]") as unknown;
+      const scoreRaw = JSON.parse(localStorage.getItem("algo-quiz") ?? "{}") as unknown;
+      setSeen(Array.isArray(seenRaw) ? seenRaw.filter((x): x is string => typeof x === "string") : []);
+      if (scoreRaw && typeof scoreRaw === "object") {
+        setScores(scoreRaw as Record<string, number>);
+      }
+    } catch {
+      /* 沒有存檔就當還沒讀 */
+    }
+  }, []);
 
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase();
@@ -76,9 +91,9 @@ export function Catalog() {
                 {g.english} · {g.blurb}
               </p>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,20rem),1fr))]">
               {g.items.map((a) => (
-                <Link key={a.slug} href={`/algorithms/${a.slug}`} className="group">
+                <Link key={a.slug} href={`/algorithms/${a.slug}`} className="group cursor-pointer">
                   <Card className="paper-card h-full transition-transform group-hover:-translate-y-0.5">
                     <CardHeader className="border-b">
                       <div className="flex items-start justify-between gap-2">
@@ -95,6 +110,20 @@ export function Catalog() {
                           考頻 {a.examWeight}
                         </Badge>
                       </div>
+                      {(seen.includes(a.slug) || scores[a.slug] !== undefined) && (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {seen.includes(a.slug) && (
+                            <Badge variant="outline" className="font-normal">
+                              已讀
+                            </Badge>
+                          )}
+                          {scores[a.slug] !== undefined && (
+                            <Badge variant="outline" className="font-normal">
+                              測驗 {scores[a.slug]}/3
+                            </Badge>
+                          )}
+                        </div>
+                      )}
                       <CardDescription className="line-clamp-2">
                         {a.summary}
                       </CardDescription>
@@ -134,7 +163,7 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "rounded-full px-3 py-1 text-xs transition-colors",
+        "min-h-11 rounded-full px-3 text-xs transition-colors duration-200",
         active
           ? "bg-primary text-primary-foreground"
           : "bg-card text-muted-foreground ring-1 ring-border hover:text-foreground"

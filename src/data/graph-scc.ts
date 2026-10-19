@@ -212,7 +212,7 @@ TARJAN(u)                       // 一次 DFS
       ],
       result: "可滿足，例如 x=假、y=真、z=真",
     },
-    visualizer: "none",
+    visualizer: "graph",
     pseudocode: `TWOSAT(n, clauses)
   建圖：對每個 (a ∨ b)
     加邊 ¬a → b、¬b → a

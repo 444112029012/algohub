@@ -52,7 +52,7 @@ export function Quiz({
                       setPicked((s) => ({ ...s, [q.id]: i }))
                     }
                     className={cn(
-                      "rounded-lg border px-3 py-2 text-left text-sm transition-colors",
+                      "min-h-11 rounded-lg border px-3 py-2 text-left text-sm transition-colors duration-200",
                       selected && !revealed && "border-primary bg-primary/5",
                       isAns && "border-teal bg-teal/15",
                       isWrong && "border-vermillion bg-vermillion/10",
@@ -77,6 +77,9 @@ export function Quiz({
         <Button onClick={submit} disabled={answered < questions.length}>
           對答案
         </Button>
+        {!revealed && answered < questions.length && (
+          <p className="text-sm text-muted-foreground">還有 {questions.length - answered} 題沒選</p>
+        )}
         {revealed && (
           <p className="text-sm">
             得分 {correct} / {questions.length}

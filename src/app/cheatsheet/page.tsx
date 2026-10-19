@@ -35,185 +35,121 @@ const dpRows = [
   ["活動選擇", "O(n log n)", "結束最早", "貪婪即最優"],
 ];
 
+function CheatTable({
+  title,
+  headers,
+  rows,
+}: {
+  title: string;
+  headers: string[];
+  rows: string[][];
+}) {
+  return (
+    <Card className="cheat-fit paper-card overflow-hidden">
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="px-0 pb-0">
+        <div className="cheat-cards space-y-2 px-4 pb-4">
+          {rows.map((row) => (
+            <div key={row[0]} className="rounded-lg bg-muted/50 px-3 py-2">
+              <p className="font-medium">{row[0]}</p>
+              <dl className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                {headers.slice(1).map((header, index) => (
+                  <div key={header} className="min-w-0">
+                    <dt className="text-muted-foreground">{header}</dt>
+                    <dd className="break-words">{row[index + 1]}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          ))}
+        </div>
+        <div className="cheat-grid">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-muted/60 text-xs text-muted-foreground">
+              <tr>
+                {headers.map((header) => (
+                  <th key={header} className="px-3 py-2 font-medium">
+                    {header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row[0]} className="border-t border-border">
+                  {row.map((cell, index) => (
+                    <td key={`${row[0]}-${index}`} className="px-3 py-2 align-top break-words">
+                      {cell}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function CheatsheetPage() {
   return (
-    <div className="mx-auto max-w-6xl space-y-8 px-4 py-10 sm:px-6">
+    <div className="mx-auto w-full min-w-0 max-w-[1600px] space-y-8 px-4 py-10 sm:px-6 lg:px-8">
       <div>
         <p className="text-xs tracking-[0.2em] text-vermillion">CHEATSHEET</p>
-        <h1 className="font-heading mt-2 text-3xl sm:text-4xl">複雜度與對照速查</h1>
+        <h1 className="font-heading mt-2 text-[clamp(1.75rem,4vw,2.5rem)]">複雜度與對照速查</h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
           選擇題最常出「哪個穩定、哪個最壞 n²、哪個不能有負權」。先盯這幾張表，再進各篇教材看證明直覺與手算。
         </p>
       </div>
 
-      <Card className="paper-card overflow-hidden">
-        <CardHeader>
-          <CardTitle>排序</CardTitle>
-        </CardHeader>
-        <CardContent className="overflow-x-auto px-0 pb-0">
-          <table className="w-full min-w-[640px] text-left text-sm">
-            <thead className="bg-muted/60 text-xs text-muted-foreground">
-              <tr>
-                {["演算法", "最好", "平均", "最壞", "空間", "穩定", "原地"].map((h) => (
-                  <th key={h} className="px-4 py-2 font-medium">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {sortingCheat.map((r) => (
-                <tr key={r.name} className="border-t border-border">
-                  <td className="px-4 py-2 font-medium">{r.name}</td>
-                  <td className="px-4 py-2 font-mono text-xs">{r.best}</td>
-                  <td className="px-4 py-2 font-mono text-xs">{r.avg}</td>
-                  <td className="px-4 py-2 font-mono text-xs">{r.worst}</td>
-                  <td className="px-4 py-2 font-mono text-xs">{r.space}</td>
-                  <td className="px-4 py-2">{r.stable ? "是" : "否"}</td>
-                  <td className="px-4 py-2">{r.inPlace ? "是" : "否"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
+      <CheatTable
+        title="排序"
+        headers={["演算法", "最好", "平均", "最壞", "空間", "穩定", "原地"]}
+        rows={sortingCheat.map((r) => [
+          r.name,
+          r.best,
+          r.avg,
+          r.worst,
+          r.space,
+          r.stable ? "是" : "否",
+          r.inPlace ? "是" : "否",
+        ])}
+      />
 
-      <Card className="paper-card overflow-hidden">
-        <CardHeader>
-          <CardTitle>圖論</CardTitle>
-        </CardHeader>
-        <CardContent className="overflow-x-auto px-0 pb-0">
-          <table className="w-full min-w-[720px] text-left text-sm">
-            <thead className="bg-muted/60 text-xs text-muted-foreground">
-              <tr>
-                {["演算法", "時間", "典型用途", "陷阱"].map((h) => (
-                  <th key={h} className="px-4 py-2 font-medium">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {graphRows.map((r) => (
-                <tr key={r[0]} className="border-t border-border">
-                  {r.map((c) => (
-                    <td key={c} className="px-4 py-2">
-                      {c}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
+      <CheatTable title="圖論" headers={["演算法", "時間", "典型用途", "陷阱"]} rows={graphRows} />
 
-      <Card className="paper-card overflow-hidden">
-        <CardHeader>
-          <CardTitle>動態規劃與貪婪</CardTitle>
-        </CardHeader>
-        <CardContent className="overflow-x-auto px-0 pb-0">
-          <table className="w-full min-w-[640px] text-left text-sm">
-            <thead className="bg-muted/60 text-xs text-muted-foreground">
-              <tr>
-                {["問題", "時間", "重點", "別搞混"].map((h) => (
-                  <th key={h} className="px-4 py-2 font-medium">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {dpRows.map((r) => (
-                <tr key={r[0]} className="border-t border-border">
-                  {r.map((c) => (
-                    <td key={c} className="px-4 py-2">
-                      {c}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
+      <CheatTable title="動態規劃與貪婪" headers={["問題", "時間", "重點", "別搞混"]} rows={dpRows} />
 
-      <Card className="paper-card overflow-hidden">
-        <CardHeader>
-          <CardTitle>搜尋與資料結構</CardTitle>
-        </CardHeader>
-        <CardContent className="overflow-x-auto px-0 pb-0">
-          <table className="w-full min-w-[640px] text-left text-sm">
-            <thead className="bg-muted/60 text-xs text-muted-foreground">
-              <tr>
-                {["主題", "時間", "重點", "別搞混"].map((h) => (
-                  <th key={h} className="px-4 py-2 font-medium">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                ["二分搜尋", "Θ(log n)", "已排序／單調", "lo/hi 邊界"],
-                ["答案上二分", "Θ(T log R)", "謂詞單調", "搜的是答案不是下標"],
-                ["Quickselect", "期望 Θ(n)", "第 k 小、只走一側", "最壞 n²；BFPRT 最壞線性"],
-                ["堆疊", "push／pop Θ(1)", "後進先出", "DFS 用它，BFS 不用"],
-                ["佇列", "enqueue／dequeue Θ(1)", "先進先出", "刪頭若用普通陣列會變 Θ(n)"],
-                ["二元搜尋樹", "平衡 Θ(log n)", "左小右大", "歪掉 Θ(n)；不是 heap"],
-                ["雜湊表", "平均 Θ(1)", "鍵 % 桶數，碰撞用鏈", "最壞 Θ(n)"],
-                ["Binary Heap", "insert／pop O(log n)", "建堆 Θ(n)", "0-based 左孩 2i+1"],
-                ["並查集", "α(n) 均攤", "路徑壓縮＋按秩", "不支援刪邊"],
-              ].map((r) => (
-                <tr key={r[0]} className="border-t border-border">
-                  {r.map((c) => (
-                    <td key={c} className="px-4 py-2">
-                      {c}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
-
-      <Card className="paper-card overflow-hidden">
-        <CardHeader>
-          <CardTitle>NP-complete 與近似</CardTitle>
-        </CardHeader>
-        <CardContent className="overflow-x-auto px-0 pb-0">
-          <table className="w-full min-w-[720px] text-left text-sm">
-            <thead className="bg-muted/60 text-xs text-muted-foreground">
-              <tr>
-                {["問題", "關係", "考試抓手", "近似"].map((h) => (
-                  <th key={h} className="px-4 py-2 font-medium">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                ["3-SAT", "化約起點（2-SAT 在 P）", "A ≤p B 表示 B 較硬", "—"],
-                ["團／獨立集", "補圖互化", "獨立集大小 k ⇔ 點覆蓋 n-k", "團沒有好的常數近似"],
-                ["點覆蓋", "V\\C 是獨立集", "匹配兩端", "2-approx"],
-                ["子集覆蓋／擊中集", "關聯矩陣對偶", "每次選新覆蓋最多", "H(n)≈ln n"],
-                ["哈密頓／TSP", "歐拉在 P、哈密頓 NPC", "度量才有 MST 加倍", "度量 2-approx"],
-                ["子集和／分割", "弱 NPC", "Θ(nT) 偽多項式", "有 FPTAS"],
-              ].map((r) => (
-                <tr key={r[0]} className="border-t border-border">
-                  {r.map((c) => (
-                    <td key={c} className="px-4 py-2">
-                      {c}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
+      <CheatTable
+        title="搜尋與資料結構"
+        headers={["主題", "時間", "重點", "別搞混"]}
+        rows={[
+          ["二分搜尋", "Θ(log n)", "已排序／單調", "lo/hi 邊界"],
+          ["答案上二分", "Θ(T log R)", "謂詞單調", "搜的是答案不是下標"],
+          ["Quickselect", "期望 Θ(n)", "第 k 小、只走一側", "最壞 n²；BFPRT 最壞線性"],
+          ["堆疊", "push／pop Θ(1)", "後進先出", "DFS 用它，BFS 不用"],
+          ["佇列", "enqueue／dequeue Θ(1)", "先進先出", "刪頭若用普通陣列會變 Θ(n)"],
+          ["二元搜尋樹", "平衡 Θ(log n)", "左小右大", "歪掉 Θ(n)；不是 heap"],
+          ["雜湊表", "平均 Θ(1)", "鍵 % 桶數，碰撞用鏈", "最壞 Θ(n)"],
+          ["Binary Heap", "insert／pop O(log n)", "建堆 Θ(n)", "0-based 左孩 2i+1"],
+          ["並查集", "α(n) 均攤", "路徑壓縮＋按秩", "不支援刪邊"],
+        ]}
+      />
+      <CheatTable
+        title="NP-complete 與近似"
+        headers={["問題", "關係", "考試抓手", "近似"]}
+        rows={[
+          ["3-SAT", "化約起點（2-SAT 在 P）", "A ≤p B 表示 B 較硬", "—"],
+          ["團／獨立集", "補圖互化", "獨立集大小 k ⇔ 點覆蓋 n-k", "團沒有好的常數近似"],
+          ["點覆蓋", "V\\C 是獨立集", "匹配兩端", "2-approx"],
+          ["子集覆蓋／擊中集", "關聯矩陣對偶", "每次選新覆蓋最多", "H(n)≈ln n"],
+          ["哈密頓／TSP", "歐拉在 P、哈密頓 NPC", "度量才有 MST 加倍", "度量 2-approx"],
+          ["子集和／分割", "弱 NPC", "Θ(nT) 偽多項式", "有 FPTAS"],
+        ]}
+      />
 
       <p className="text-sm text-muted-foreground">
         完整推導與動畫請回{" "}

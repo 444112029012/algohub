@@ -5,8 +5,10 @@ import { Quiz } from "@/components/quiz";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { RememberVisit } from "@/components/remember-visit";
 import { getAlgorithm, type Algorithm } from "@/data";
 import { CATEGORIES } from "@/data/types";
+import { studyNeighbors } from "@/lib/study-path";
 
 function demoLead(algorithm: Algorithm) {
   if (algorithm.slug === "bellman-ford") {
@@ -20,6 +22,15 @@ function demoLead(algorithm: Algorithm) {
   }
   if (algorithm.slug === "bst") {
     return "比現在這個點小就往左，大就往右。還沒放入的點先不畫。這不是堆積：堆積的左右沒有大小順序。";
+  }
+  if (algorithm.slug === "vertex-cover") {
+    return "實線是這一步抓的邊。還沒被蓋的邊都可以抓；動畫依列出順序抓，不是因為那條比較好。抓完後，碰到這兩個點的邊會變成虛線。";
+  }
+  if (algorithm.slug === "two-sat") {
+    return "每個子句變成兩條箭頭。亮起來的是這一對。最後看 x 和 ¬x 能不能互相走到：能走到就是無解。";
+  }
+  if (algorithm.slug === "three-sat" || algorithm.slug === "clique-independent-set" || algorithm.slug === "hamilton-tsp") {
+    return "箭頭是化約方向：左邊能在多項式時間變成右邊，所以右邊至少和左邊一樣難。點亮的是這一頁在鏈上的位置。";
   }
   if (algorithm.slug === "stack") {
     return "右邊是頂端。最後放進去的，下一次最先被拿走。";
@@ -45,6 +56,28 @@ function demoLead(algorithm: Algorithm) {
   return "用同一組小例子把演算法跑一遍。";
 }
 
+function PathNav({ slug }: { slug: string }) {
+  const hop = studyNeighbors(slug);
+  if (!hop) return null;
+  return (
+    <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
+      <span className="text-muted-foreground">
+        讀序第 {hop.current.station} 站 · {hop.current.title}
+      </span>
+      {hop.prev && (
+        <Link href={`/algorithms/${hop.prev.slug}`} className="rounded-full bg-card px-3 py-1 ring-1 ring-border hover:bg-muted">
+          上一篇 {hop.prev.label}
+        </Link>
+      )}
+      {hop.next && (
+        <Link href={`/algorithms/${hop.next.slug}`} className="rounded-full bg-primary px-3 py-1 text-primary-foreground hover:bg-primary/90">
+          下一篇 {hop.next.label}
+        </Link>
+      )}
+    </div>
+  );
+}
+
 const toc = [
   { id: "intro", label: "介紹" },
   { id: "complexity", label: "複雜度" },
@@ -63,8 +96,10 @@ export function Lesson({ algorithm }: { algorithm: Algorithm }) {
     .filter((x): x is Algorithm => Boolean(x));
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[1fr_200px]">
+    <div className="mx-auto grid w-full min-w-0 max-w-[1600px] gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_200px] lg:px-8">
+      <RememberVisit slug={algorithm.slug} />
       <article className="min-w-0 space-y-10">
+        <LessonToc items={toc.filter((t) => algorithm.visualizer !== "none" || t.id !== "demo")} mobile />
         <div>
           <p className="text-xs tracking-wide text-muted-foreground">
             <Link href="/" className="hover:underline">
@@ -74,16 +109,22 @@ export function Lesson({ algorithm }: { algorithm: Algorithm }) {
             {cat?.name}
           </p>
           <div className="mt-2 flex flex-wrap items-end gap-3">
-            <h1 className="font-heading text-3xl sm:text-4xl">{algorithm.name}</h1>
+            <h1 className="font-heading text-[clamp(1.75rem,4vw,2.5rem)]">{algorithm.name}</h1>
             <span className="pb-1 text-sm text-muted-foreground">{algorithm.english}</span>
             <Badge className="bg-vermillion/15 text-vermillion">考頻 {algorithm.examWeight}</Badge>
           </div>
           <p className="mt-4 max-w-3xl text-[15px] leading-7">{algorithm.summary}</p>
+          <PathNav slug={algorithm.slug} />
         </div>
 
         <section id="intro" className="scroll-mt-20 space-y-3">
-          <h2 className="font-heading text-2xl">想法</h2>
-          <p className="leading-7 text-[15px]">{algorithm.idea}</p>
+          <h2 className="font-heading border-b border-border/80 pb-2 text-2xl">想法</h2>
+          <p className="max-w-prose text-[15px] leading-7">{algorithm.idea}</p>
+          {algorithm.slug === "master-theorem" && (
+            <p className="text-sm leading-6 text-muted-foreground">
+              這篇是三情況對照，用手算，沒有逐步動畫。
+            </p>
+          )}
           <div>
             <h3 className="mb-2 text-sm font-medium">什麼時候用</h3>
             <ul className="list-disc space-y-1 pl-5 text-sm leading-6">
@@ -96,7 +137,7 @@ export function Lesson({ algorithm }: { algorithm: Algorithm }) {
 
         <section id="complexity" className="scroll-mt-20 space-y-3">
           <h2 className="font-heading text-2xl">複雜度與性質</h2>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 min-[480px]:grid-cols-4">
             <Stat label="最好" value={algorithm.complexity.timeBest} />
             <Stat label="平均" value={algorithm.complexity.timeAvg} />
             <Stat label="最壞" value={algorithm.complexity.timeWorst} />
@@ -214,7 +255,7 @@ export function Lesson({ algorithm }: { algorithm: Algorithm }) {
 
         {related.length > 0 && (
           <section className="space-y-2">
-            <h2 className="font-heading text-xl">接著看</h2>
+            <h2 className="font-heading text-xl">相關題目</h2>
             <div className="flex flex-wrap gap-2">
               {related.map((r) => (
                 <Link
@@ -231,22 +272,47 @@ export function Lesson({ algorithm }: { algorithm: Algorithm }) {
       </article>
 
       <aside className="hidden lg:block">
-        <nav className="sticky top-20 space-y-1 text-sm">
-          <p className="mb-2 text-xs tracking-wide text-muted-foreground">本頁</p>
-          {toc
-            .filter((t) => algorithm.visualizer !== "none" || t.id !== "demo")
-            .map((t) => (
-              <a
-                key={t.id}
-                href={`#${t.id}`}
-                className="block rounded-md px-2 py-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                {t.label}
-              </a>
-            ))}
-        </nav>
+        <LessonToc items={toc.filter((t) => algorithm.visualizer !== "none" || t.id !== "demo")} />
       </aside>
     </div>
+  );
+}
+
+function LessonToc({
+  items,
+  mobile,
+}: {
+  items: { id: string; label: string }[];
+  mobile?: boolean;
+}) {
+  if (mobile) {
+    return (
+      <nav className="sticky top-14 z-30 -mx-4 flex gap-1 overflow-x-auto bg-paper/95 px-4 py-2 backdrop-blur-md sm:-mx-6 sm:px-6 lg:hidden">
+        {items.map((t) => (
+          <a
+            key={t.id}
+            href={`#${t.id}`}
+            className="shrink-0 rounded-full bg-card px-3 py-1 text-xs ring-1 ring-border"
+          >
+            {t.label}
+          </a>
+        ))}
+      </nav>
+    );
+  }
+  return (
+    <nav className="sticky top-20 space-y-1 text-sm">
+      <p className="mb-2 text-xs tracking-wide text-muted-foreground">本頁</p>
+      {items.map((t) => (
+        <a
+          key={t.id}
+          href={`#${t.id}`}
+          className="block rounded-md px-2 py-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          {t.label}
+        </a>
+      ))}
+    </nav>
   );
 }
 
